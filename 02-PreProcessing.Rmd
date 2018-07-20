@@ -1,0 +1,337 @@
+# PreProcessing
+
+
+## The Raw Data
+
+The raw data from zillow contains the following data (desrciptions from the the data page)
+
+* __properties_2016.csv__ - all the properties with their home features for 2016. Note: Some 2017 new properties don't have any data yet except for their parcelid's. Those data points should be populated when properties_2017.csv is available.
+
+* __properties_2017.csv__ - all the properties with their home features for 2017 (released on 10/2/2017)
+
+* __train_2016.csv__ - the training set with transactions from 1/1/2016 to 12/31/2016
+
+* __train_2017.csv__ - the training set with transactions from 1/1/2017 to 9/15/2017 (released on 10/2/2017)
+
+* __sample_submission.csv__ - a sample submission file in the correct format
+
+### Saving Raw Data Using `feather`
+The `feather` package provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a `.feather` file format to make all other read faster
+
+```{r save-raw-as-feather, eval=FALSE}
+library(feather)
+library(readr)
+
+dir.create("data-raw/feather")
+
+prop_16 <- read_csv("data-raw/properties_2016.csv")
+prop_17 <- read_csv("data-raw/properties_2017.csv")
+train_16 <- read_csv("data-raw/train_2016_v2.csv")
+train_17 <- read_csv("data-raw/train_2017.csv")
+
+write_feather(prop_16, "data-raw/feather/properties_2016.feather")
+write_feather(prop_17, "data-raw/feather/properties_2017.feather")
+write_feather(train_16, "data-raw/feather/train_2016_v2.feather")
+write_feather(train_17, "data-raw/feather/train_2017.feather")
+```
+
+## Renaming Variables
+
+Many of the feature names are not very consistant. Let's rename them to something easier to work with
+
+### Renaming `properties` Features
+```{r prop-rename, warning=FALSE, message=FALSE, eval=FALSE}
+library(tidyverse)
+library(feather)
+
+prop_16 <- read_feather("data-raw/feather/properties_2016.feather")
+prop_17 <- read_feather("data-raw/feather/properties_2017.feather")
+
+prop_16 <- prop_16 %>% 
+  rename(
+    id_parcel = parcelid,
+    build_year = yearbuilt,
+    area_basement = basementsqft,
+    area_patio = yardbuildingsqft17,
+    area_shed = yardbuildingsqft26, 
+    area_pool = poolsizesum,  
+    area_lot = lotsizesquarefeet, 
+    area_garage = garagetotalsqft,
+    area_firstfloor_finished_1 = finishedfloor1squarefeet,
+    area_firstfloor_finished_2 = finishedsquarefeet50,
+    area_living_finished_calc = calculatedfinishedsquarefeet,
+    area_base = finishedsquarefeet6,
+    area_living_finished = finishedsquarefeet12,
+    area_living_perimeter = finishedsquarefeet13,
+    area_total = finishedsquarefeet15,  
+    num_unit = unitcnt, 
+    num_story = numberofstories,  
+    num_room = roomcnt,
+    num_bathroom = bathroomcnt,
+    num_bedroom = bedroomcnt,
+    num_bathroom_calc = calculatedbathnbr,
+    num_bath = fullbathcnt,  
+    num_75_bath = threequarterbathnbr, 
+    num_fireplace = fireplacecnt,
+    num_pool = poolcnt,  
+    num_garage = garagecarcnt,  
+    region_county = regionidcounty,
+    region_city = regionidcity,
+    region_zip = regionidzip,
+    region_neighbor = regionidneighborhood,  
+    tax_total = taxvaluedollarcnt,
+    tax_building = structuretaxvaluedollarcnt,
+    tax_land = landtaxvaluedollarcnt,
+    tax_property = taxamount,
+    tax_year = assessmentyear,
+    tax_delinquency = taxdelinquencyflag,
+    tax_delinquency_year = taxdelinquencyyear,
+    zoning_property = propertyzoningdesc,
+    zoning_landuse = propertylandusetypeid,
+    zoning_landuse_county = propertycountylandusecode,
+    str_flag_fireplace = fireplaceflag, 
+    str_flag_tub = hashottuborspa,
+    str_quality = buildingqualitytypeid,
+    str_framing = buildingclasstypeid,
+    str_material = typeconstructiontypeid,
+    str_deck = decktypeid,
+    str_story = storytypeid,
+    str_heating = heatingorsystemtypeid,
+    str_aircon = airconditioningtypeid,
+    str_arch_style = architecturalstyletypeid
+  )
+
+# use 2016 names to rename 17
+names(prop_17) <- names(prop_16)
+
+```
+
+### renaming `train` features
+```{r train-rename, eval=FALSE}
+library(tidyverse)
+library(feather)
+
+trans_16 <- read_feather("data-raw/feather/train_2016_v2.feather")
+trans_17 <- read_feather("data-raw/feather/train_2017.feather")
+
+trans_16 <- trans_16 %>% 
+  rename(
+  id_parcel = parcelid,
+  date = transactiondate,
+  log_error = logerror
+  )
+
+# use 2016 names to rename 17
+names(trans_17) <- names(trans_16)
+
+```
+
+### Basic Transformations
+
+#### Properties
+```{r prop-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
+library(forcats)
+
+prop_16 <- prop_16 %>%
+  mutate(
+    tax_delinquency = ifelse(tax_delinquency == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_fireplace = ifelse(str_flag_fireplace == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_tub = ifelse(str_flag_tub == "Y", "Yes", "No") %>%
+      as_factor(),
+    zoning_landuse = factor(zoning_landuse, levels = sort(unique(zoning_landuse))),
+    zoning_landuse = fct_recode(zoning_landuse,
+      "Commercial/Office/Residential Mixed Used" = "31", 
+      "Multi-Story Store"                        = "46",
+      "Store/Office (Mixed Use)"                 = "47",
+      "Duplex (2 Units Any Combination)"         = "246",
+      "Triplex (3 Units Any Combination)"        = "247",
+      "Quadruplex (4 Units Any Combination)"     = "248",
+      "Residential General"                      = "260",
+      "Single Family Residential"                = "261",
+      "Rural Residence"                          = "262",
+      "Mobile Home"                              = "263",
+      "Townhouse"                                = "264",
+      "Cluster Home"                             = "265",
+      "Condominium"                              = "266",
+      "Cooperative"                              = "267",
+      "Row House"                                = "268",
+      "Planned Unit Development"                 = "269",
+      "Residential Common Area"                  = "270",
+      "Timeshare"                                = "271",
+      "Bungalow"                                 = "273",
+      "Zero Lot Line"                            = "274",
+      "Manufactured Modular Prefabricated Homes" = "275",
+      "Patio Home"                               = "276",
+      "Inferred Single Family Residential"       = "279",
+      "Vacant Land - General"                    = "290",
+      "Residential Vacant Land"                  = "291"
+      )
+    )
+
+prop_17 <- prop_17 %>%
+  mutate(
+    tax_delinquency = ifelse(tax_delinquency == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_fireplace = ifelse(str_flag_fireplace == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_tub = ifelse(str_flag_tub == "Y", "Yes", "No") %>%
+      as_factor(),
+    zoning_landuse = factor(zoning_landuse, levels = sort(unique(zoning_landuse))),
+    zoning_landuse = fct_recode(zoning_landuse,
+      "Commercial/Office/Residential Mixed Used" = "31", 
+      "Multi-Story Store"                        = "46",
+      "Store/Office (Mixed Use)"                 = "47",
+      "Duplex (2 Units Any Combination)"         = "246",
+      "Triplex (3 Units Any Combination)"        = "247",
+      "Quadruplex (4 Units Any Combination)"     = "248",
+      "Residential General"                      = "260",
+      "Single Family Residential"                = "261",
+      "Rural Residence"                          = "262",
+      "Mobile Home"                              = "263",
+      "Townhouse"                                = "264",
+      "Cluster Home"                             = "265",
+      "Condominium"                              = "266",
+      "Cooperative"                              = "267",
+      "Row House"                                = "268",
+      "Planned Unit Development"                 = "269",
+      "Residential Common Area"                  = "270",
+      "Timeshare"                                = "271",
+      "Bungalow"                                 = "273",
+      "Zero Lot Line"                            = "274",
+      "Manufactured Modular Prefabricated Homes" = "275",
+      "Patio Home"                               = "276",
+      "Inferred Single Family Residential"       = "279",
+      "Vacant Land - General"                    = "290",
+      "Residential Vacant Land"                  = "291"
+      )
+    )
+
+```
+
+
+#### Transactions
+```{r trans-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
+library(lubridate)
+
+# combine transactions into one data frame
+trans <- trans_16 %>%
+  bind_rows(trans_17) %>%
+  mutate(
+    abs_log_error = abs(log_error),
+    year = year(date),
+    month_year = make_date(year(date), month(date)),
+    month = month(date, label = TRUE),
+    week = floor_date(date, unit = "week"),
+    week_of_year = week(date),
+    week_since_start = (min(date) %--% date %/% dweeks()) + 1,
+    wday = wday(date, label = TRUE),
+    day_of_month = day(date)
+  )
+
+```
+
+
+```{r save-output, eval=FALSE}
+write_feather(prop_16, "data/properties_16.feather")
+write_feather(prop_17, "data/properties_17.feather")
+write_feather(trans, "data/transactions.feather")
+```
+
+
+## Extracting Geographic Information
+
+The raw data contains information on block group ids. We can clean this up and use it to bring in external data like Census infomation. 
+```{r prop-geo, eval=FALSE}
+library(sf)
+library(feather)
+library(forcats)
+library(tidyverse)
+library(tidycensus)
+
+
+# NAD83 / California zone 5 (ftUS)
+# https://epsg.io/2229
+crs_id <- 2229
+
+api_key <- Sys.getenv("CENSUS_API_KEY")
+census_api_key(api_key)
+
+# some obs have no data at all included lat/long
+# the original lat / lon are mulitpled by 10e5 so divide to
+# get lat lon back when converting to sf
+properties <- read_feather("data-raw/properties_2017") %>% 
+  filter(!is.na(latitude)) %>%
+  mutate(
+    lat = latitude / 10e5,
+    lon = longitude / 10e5
+    ) %>%
+  st_as_sf(
+    coords = c("lon", "lat"), 
+    crs = 4326, # WGS 84
+    remove = FALSE # keep lat/long fields
+    ) %>%
+  st_transform(crs_id)
+
+
+census_bgs <- get_acs(
+  geography = "block group", 
+  variables = "B19013_001", 
+  state = "CA",
+  county = c("Los Angeles", "Orange", "Ventura"), 
+  geometry = TRUE, 
+  keep_geo_vars = TRUE
+  ) %>%
+  st_transform(crs_id)
+
+# inner join
+# due to lat / lon error some points didn't intersect
+# with block groups left = FALSE is inner join
+properties_geo <- properties %>%
+  st_join(census_bgs, left = FALSE)
+
+# find all of the points that didn't intersect
+# buffer them and then join to closest block
+# then add back the already joined points
+# the buffer distance I just played around with until
+# all points joined with a block group
+properties_geo <- properties %>%
+  filter(!parcelid %in% properties_geo$parcelid) %>%
+  st_buffer(dist = 1500) %>% # units are in us-ft based on crs_id
+  st_join(census_bgs, left = FALSE, largest = TRUE) %>%
+  rbind(properties_geo)
+
+
+# remove geometry b/c feather can't store lists
+properties_geo <- properties_geo %>%
+  select(
+    id_parcel = parcelid,
+    id_geo_state = STATEFP,
+    id_geo_county = COUNTYFP,
+    id_geo_tract = TRACTCE,
+    id_geo_bg = BLKGRPCE,
+    id_geo_bg_fips = GEOID,
+    id_geo_bg_name = NAME.y,
+    geo_bg_arealand = ALAND,
+    geo_bg_areawater = AWATER,
+    lat, 
+    lon
+    ) %>%
+  mutate(
+    id_geo_county_fips = paste0(id_geo_state, id_geo_county),
+    id_geo_tract_fips = paste0(id_geo_county_fips, id_geo_tract),
+    id_geo_county_name = factor(id_geo_county) %>%
+      fct_recode(
+        "Los Angeles" = "037",
+        "Orange"      = "059",
+        "Ventura"     = "111"
+      )
+  )
+
+# remove geometry b/c feather can't store lists
+# add back in when needed from lat lon
+properties_geo$geometry <- NULL
+
+write_feather(properties_geo, "data/properties_geo_only.feather")
+```

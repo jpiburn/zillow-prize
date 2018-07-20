@@ -1,0 +1,590 @@
+# Exploratory Analysis
+
+```{r, warning=FALSE, message=FALSE}
+library(feather)
+library(skimr)
+library(tidyverse)
+library(DataExplorer)
+
+trans <- read_feather("data/transactions.feather")
+
+```
+
+
+## Response Variable
+`log_error` something something text
+```{r skim-trans, warning=FALSE, out.width="100%", cache=TRUE}
+skim(trans) %>%
+  skimr::pander()
+```
+
+
+```{r log-error-dist-all, fig.cap="Distribution of Log Error", message=FALSE, cache=TRUE}
+trans %>% 
+  ggplot(aes(x = log_error)) + 
+  geom_histogram(bins=400, fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+```{r log-error-dist-95, fig.cap="Distribution of Log Error Between 5 and 95 Percentile", message=FALSE, cache=TRUE}
+trans %>% 
+  filter(
+    log_error > quantile(log_error, probs = c(.05)),
+    log_error < quantile(log_error, probs = c(.95))
+  ) %>%
+  ggplot(aes(x = log_error)) + 
+  geom_histogram(fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+
+```{r abs-log-error-dist-95, fig.cap="Distribution of Absolute value of Log Error Between 5 and 95 Percentile", cache=TRUE}
+trans %>% 
+  filter(
+    log_error > quantile(abs_log_error, probs = c(.05)),
+    log_error < quantile(abs_log_error, probs = c(.95))
+  ) %>%
+  ggplot(aes(x = abs_log_error)) + 
+  geom_histogram(fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+```{r avg-le-by-month, fig.cap="Average Log Error by Month" ,cache=TRUE}
+trans %>% 
+  group_by(month_year) %>% 
+  summarise(mean_log_error = mean(log_error)) %>% 
+  ggplot(aes(x = month_year, y = mean_log_error)) + 
+  geom_line(size = 1, colour = "red") +
+  geom_point(size = 3, colour = "red") + 
+  theme_bw()
+```
+
+```{r avg-le-by-month-year, fig.cap="Average Log Error by Month. 2017 Looks to have a higher baseline" ,cache=TRUE}
+trans %>% 
+  group_by(month_year, year, month) %>% 
+  summarise(mean_log_error = mean(log_error)) %>%  
+  ungroup() %>%
+  ggplot(aes(x = as.numeric(month), y = mean_log_error)) +
+  geom_path(aes(colour = as.factor(year)), size = 1) +
+  theme_bw() +
+  ylim(c(0, .03)) +
+  scale_x_continuous(breaks = 1:12, labels = levels(trans$month)) + 
+  labs(
+    colour = NULL,
+    x = "month"
+  )
+```
+
+
+```{r avg-le-by-week, fig.cap="Average Log Error by Week", message=FALSE, cache=TRUE}
+trans %>%
+  group_by(week_since_start) %>%
+  summarise(mean_log_error = mean(log_error)) %>%
+  ggplot(aes(x = week_since_start, y = mean_log_error)) + 
+  geom_line(colour = "red", size = 1) +
+  geom_smooth() + 
+  theme_bw()
+```
+
+### Transactions Over Time
+
+```{r trans-per-week, fig.cap="Number of Transactions per Week. The dip in the middle coorisponds to the hold out testing data", message=FALSE ,cache=TRUE}
+trans %>% 
+  group_by(week_since_start) %>% 
+  summarise(n = n()) %>% 
+  ggplot(aes(x = week_since_start, y = n)) +
+  geom_line(colour = "red", size = 1) +
+  theme_bw() +
+  labs(
+    y = "Numeber of Transactions"
+  )
+```
+
+
+```{r trans-by-wday, fig.cap="Number of Transactions by Day of the Week.", message=FALSE, cache=TRUE}
+trans %>% 
+  group_by(wday) %>% 
+  count() %>% 
+  ggplot(aes(x = wday, y = n)) +
+  geom_bar(stat = "identity", fill = "red", alpha = 0.5) + 
+  theme_bw()
+```
+
+### Map
+```{r, map-log-error, fig.cap="Distribution of Log Errors", message=FALSE, warning=FALSE, out.width="100%", cache=TRUE}
+library(leaflet)
+library(leaflet.extras)
+
+read_feather("data/properties_geo_only.feather") %>%
+  right_join(trans, by = "id_parcel") %>%
+  filter(
+    !is.na(lat)
+    ) %>%
+leaflet() %>% 
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addHeatmap(lng=~lon, lat=~lat, intensity = ~log_error, 
+             radius = 5, minOpacity = 0.2, cellSize = 6)
+
+```
+
+
+## Predictor Variables
+
+Now lets take a look at the properties dataset
+
+```{r read-prop}
+properties <- read_feather("data/properties_17.feather")
+```
+
+```{r skim-prop, cache=TRUE}
+skim(properties) %>%
+  skimr::pander()
+```
+
+### Missingness
+```{r miss-plot, fig.asp=1.2, fig.cap="Completeness by Feature. Many are extremely sparse"}
+missing_data <- plot_missing(properties, theme = theme_bw())
+
+missing_data
+```
+
+There seem to be quite a lot of missing features. For now lets remove the ones that are over 50% and continue on with those. We could come back to the ones we dropped and try to recover some of those missing values with more sophisticated methods, for example we could impute the missing values based on their spatial neighbors but for now we will continue with the ones that have over 50% of their values.
+
+A few of the features, `rawcensustractandblock`, `fips`, and `censustractandblock`, and `region_county` are ID fields for their census geography units. Since we have already extracted that information earlier in `properties_geo` we will drop them here as well since we can add the information contained in those features in a cleaner format later.
+
+Additionally, based on the descriptions, `zoning_landuse`, `zoning_landuse_county`, and `zoning_property` all seem to contain pretty similar information.Since the number of unique categories are fairly large for each one, if they are redundant they could add needless complexity and computation time to our model. Let's use a chi-squared test to see what it looks like
+```{r chi-1, warning=FALSE}
+chisq.test(properties$zoning_landuse, properties$zoning_property)
+```
+
+```{r chi-2, warning=FALSE}
+chisq.test(properties$zoning_landuse, properties$zoning_landuse_county)
+```
+
+Based on that, let's remove `zoning_property` and `zoning_landuse_county`
+
+```{r remove-missing}
+
+features_to_keep <- missing_data %>% 
+  filter(
+    pct_missing <= .50,
+    !feature %in% c("rawcensustractandblock", "fips", 
+                    "censustractandblock", "region_county", 
+                    "zoning_property", "zoning_landuse_county")
+    ) %>%
+  select(feature) %>% 
+  .$feature %>% 
+  as.character()
+
+properties <- properties %>%
+  select(features_to_keep)
+
+```
+
+
+
+### Numeric Features
+
+Lets look at the histograms of all the numeric features
+```{r num-hist, cache=TRUE, fig.cap="Distriubtions of All Numeric Features"}
+
+properties %>%
+  select(
+    -id_parcel
+  ) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+
+
+Looking at the histograms a few things become obvious. There are huge outliers in many of the features and there are some features that are currently encoded as numeric but should not be treated as such. For example, `str_quality` is an ordinal scale 1 (best qaulity) to 12 (worst) but if we leave them as numeric they will be treated as ratio. `str_heating` is nominal so the order doesn't have meaning. Other that need to be changed are `region_city`, `region_zip`
+Once we do this, we'll look again at the relationships between our numeric features.
+
+```{r turn-num-to-nom}
+properties <- properties %>%
+  mutate(
+    str_quality = factor(str_quality, 
+                         levels = min(str_quality, na.rm = TRUE):max(str_quality, na.rm = TRUE), 
+                         ordered = TRUE),
+    str_heating = factor(str_heating,
+                         levels = na.omit(unique(str_heating)),
+                         ordered = FALSE),
+    region_city = factor(region_city,
+                         levels = na.omit(unique(region_city)),
+                         ordered = FALSE),
+    region_zip = factor(region_zip,
+                         levels = na.omit(unique(region_zip)),
+                         ordered = FALSE)
+  )
+
+```
+
+
+
+### Numeric Outliers
+
+Based on the histograms there looks to be lots of outliers in many of our numeric features. Two groups of features pop out, the `num_*` features and the `tax_*`features. Let's take a closer look.
+
+```{r num-outlier, cache=TRUE, fig.cap="Distriubtions of 'num_*' Features"}
+
+properties %>%
+  select(starts_with("num_")) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+Looking at the `num_bathroom`, `num_bathroom_calc`, `num_bath` is pretty interesting. `num_bathroom` was one of the most complete features we had however, looking at the distributions, it seems strange that there would be so many houses with `0` bathrooms.
+```{r}
+sum(properties$num_bathroom == 0, na.rm = TRUE)
+```
+```{r}
+sum(properties$num_bathroom_calc == 0, na.rm = TRUE)
+```
+Now for comparing all 3
+```{r bath-compare}
+properties %>% 
+  group_by(
+    num_bathroom_calc, 
+    num_bath, 
+    num_bathroom
+    ) %>% 
+  count() %>%
+  DT::datatable()
+```
+
+If you sort by descending by `n` you'll see that one of the most frequent combinations is blank values of `num_bathroom_calc` and `num_bath` which are `NA` values and `0` for `num_bathroom`. Based on this I am interpreting that as either `0` being a coded value for `NA` or it just being wrong. Either way it looks like `num_bathroom_calc` is the one to keep out of all 3, since it has calculations of half-baths as well.
+
+Applying the same logic to `num_room` and `num_bedroom` we can set all values equal to `0` to `NA`. One side effect of this is that the `num_room` feature is now almost 100% missing and not very useful anymore. So we will just remove it.
+
+Quickly looking at `area_living_finished_calc` and `area_living_finished` reveals a similar `*_calc` being a corrected version of the feature. Becasue of this we will go ahead and remove `area_living_finished` as well
+
+```{r remove-bath}
+properties <- properties %>%
+  select(
+    -num_bath,
+    -num_bathroom,
+    -num_room,
+    -area_living_finished
+    ) %>%
+  mutate(
+    num_bedroom = ifelse(num_bedroom == 0, NA, num_bedroom)
+    )
+```
+
+
+
+Now let's look at the tax related features
+
+```{r tax-outlier, cache=TRUE, fig.cap="Distriubtions of 'tax_*' Features"}
+
+properties %>%
+  select(starts_with("tax_")) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+Lets look at the highest values for `tax_total` and see if something jumps out
+```{r}
+properties %>% 
+  mutate(tax_rank = rank(desc(tax_total))) %>% 
+  filter(tax_rank <= 20) %>% 
+  select(
+    zoning_landuse, 
+    starts_with("area_"), 
+    starts_with("tax_")
+    ) %>% 
+  arrange(tax_rank) %>%
+  DT::datatable()
+```
+
+While the values are extremely large, they appear to look legitimate. We won't remove these, but it does indicate that we should perhaps apply some transformations to our tax features before we start applying our model.
+
+Now a look at the relationships between our remaining numeric features
+
+```{r num-cor-heatmap, out.width="100%", warning=FALSE, message=FALSE, cache=TRUE, fig.cap="Correlation of Numeric Features", fig.asp=1.1}
+library(heatmaply)
+
+properties %>%
+  select(-id_parcel) %>%
+  select_if(is.numeric) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  heatmaply_cor()
+
+```
+
+
+### Categorical Features
+
+```{r prop-bars, cache=TRUE, fig.cap="Distriubtions of All Categorical Features", fig.height=8}
+plot_bar(properties, ggtheme = theme_bw())
+```
+
+The distribution across categories are extremely non-uniform, especially `str_heating` and `zoning_landuse`. This imbalance could cause use some pain later one when trying to fit our model. One way we can avoid some of this pain is by collapsing some of the rare categories into an `other` category. The number of categories we collapse to is not a hard and fast decision, it can be based on number of observations, subject matter expertise, heterogentity of the response variable within categories, or some mix of all of these).
+
+Let's look at what the distribution of `log_error` looks like across these categories.
+```{r le-by-str-qaul, fig.cap="Distribution of Log Error Across Structure Quality Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+library(forcats)
+
+properties %>%
+  select(
+    id_parcel,
+    str_quality
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(str_quality, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "str_quality"
+  )
+```
+```{r le-by-str-heating, fig.cap="Distribution of Log Error Across Heating Type Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+
+properties %>%
+  select(
+    id_parcel,
+    str_heating
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(str_heating, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "str_heating"
+  )
+```
+
+```{r le-by-zoning, fig.cap="Distribution of Log Error Across Zoning Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+
+properties %>%
+  select(
+    id_parcel,
+    zoning_landuse
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(zoning_landuse, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "zoning_landuse"
+  )
+```
+
+Since the distributions of `log_error` within each category seems well behaved, we will recode them based on number of observations
+
+```{r fact-collapse}
+properties <- properties %>%
+  mutate(
+    str_heating = fct_lump(str_heating, n = 6),
+    zoning_landuse = fct_lump(zoning_landuse, n = 8),
+    str_heating = fct_recode(str_heating,
+      "Central" = "2",
+      "Floor/Wall" = "7",
+      "Solar" = "20",
+      "Forced Air" = "6",
+      "Yes - Type Unknown" = "24",
+      "None" = "13"
+    )
+  )
+
+```
+
+
+## Exploring `log_error` A little More
+
+Now let's join the `properties`  and `properties_geo` tables to our `trans` table of tranactions and their `log_error`'s and explore those
+
+```{r trans-prop}
+trans_prop <- read_feather("data/properties_geo_only.feather") %>%
+  right_join(trans, by = "id_parcel") %>%
+  left_join(properties, by = "id_parcel")
+```
+
+
+```{r le-bg-box, fig.cap="Outliers and Variability of Mean Absolute Error Dreceases When Neighborhood Sales Increase", fig.asp=0.7}
+trans_prop %>%
+  group_by(id_geo_bg_fips, id_geo_county_name) %>%
+  summarise(
+    n = n(),
+    mean_abs_error = mean(abs_log_error)
+    ) %>%
+  ungroup() %>%
+  mutate(
+    trans_pert = cut(n, breaks = c(seq(0, 100, 10), 350))
+    ) %>%
+  ggplot(aes(x = trans_pert, y = mean_abs_error, colour = id_geo_county_name)) + 
+  geom_boxplot(outlier.size = 1.5, outlier.alpha = 1/3) +
+  theme_bw() +
+  labs(
+    subtitle = "Block Group Average Mean Absolute Error",
+    colour = NULL,
+    x = "Number of Total Transactions per Block Group",
+    y = "Mean Absolute Log Error"
+  )
+```
+
+It looks like Los Angeles is largerly the only county that has information populated for `str_qaulity`
+
+```{r le-zone-box, fig.cap="Log Error by Structure Quality", fig.asp=0.7, out.width="100%"}
+trans_prop %>%
+  ggplot(aes(x = str_quality, y = log_error, colour = id_geo_county_name)) + 
+  geom_boxplot(outlier.size = 1.5, outlier.alpha = 1/3) +
+  theme_bw() +
+  labs(
+    colour = NULL
+  )
+```
+
+```{r, fig.cap="Spatial Distribution of Log Error Outliers", message=FALSE, warning=FALSE, cache=TRUE}
+library(ggmap)
+
+trans_prop_tmp <- trans_prop %>%
+  filter(!is.na(id_geo_county_name)) %>%
+  group_by(
+    id_parcel, 
+    id_geo_county_name
+    ) %>%
+  mutate(
+    log_error_parcel_avg = mean(log_error)
+    ) %>%
+  ungroup() %>%
+  mutate(
+    outlier = ifelse(log_error < quantile(log_error, probs  = .1) | 
+                     log_error > quantile(log_error, probs  = .9), 
+                     "Outlier", "Normal")
+    )
+  
+error_map <- get_map(location = "Los Angeles, CA", 
+                     color="bw", 
+                     crop = FALSE, 
+                     zoom = 9)
+ 
+ggmap(error_map) + 
+  stat_density2d(
+    data = trans_prop_tmp, 
+    aes(x = lon, y = lat, 
+        fill = ..level.., 
+        alpha = ..level..),
+    geom = "polygon", 
+    size = 0.001, 
+    bins = 100
+    ) + 
+  scale_fill_viridis_c() + 
+  scale_alpha(range = c(0.05, 0.95), guide = FALSE) + 
+  facet_wrap(~outlier)
+```
+
+Now lets look at the spatiotemporal distribution of `log_error` outliers
+```{r le-out-month, fig.cap="SpatioTemporal Distribution of Log Error Outliers", out.width="100%", fig.height=15}
+
+trans_prop %>%
+  filter(
+    !is.na(lat),
+    (
+      log_error <= quantile(log_error, probs  = .1) | 
+      log_error >= quantile(log_error, probs  = .9)
+      )
+    ) %>%
+  mutate(
+    lon = round(lon/0.5, digits = 1) * 0.5,
+    lat = round(lat/0.5, digits = 1) * 0.5
+  ) %>%
+  group_by(lon, lat, month_year) %>%
+  summarise(
+    n = n()
+  ) %>%
+ggplot(aes(lon, lat)) +
+  geom_raster(aes(fill = n)) +
+  scale_fill_viridis_c() +
+  facet_wrap(~month_year, ncol = 3) +
+  coord_quickmap() +
+  theme_dark() +
+  labs(
+    subtitle = "Downtown Los Angeles looks to be consistently bad",
+    fill = "Count"
+  ) +
+  theme(
+    axis.text = element_text(size = 5)
+    )
+
+```
+
+At first glance there looks to be a strong spatial and temporal correlation to `log_error`. Let's look more into the spatial correlation
+
+```{r morans-i-outliers, fig.cap="Spatial Autocorrelation of Log Error Outliers", message=FALSE, warning=FALSE, cache.rebuild=TRUE}
+library(spatstat)
+library(spdep)
+
+d <- trans_prop %>%
+  filter(
+    !is.na(lat),
+    (
+      log_error <= quantile(log_error, probs  = .1) | 
+      log_error >= quantile(log_error, probs  = .9)
+      )
+    ) %>%
+  mutate(
+    lon = round(lon/0.1, digits = 1) * 0.1,
+    lat = round(lat/0.1, digits = 1) * 0.1
+  ) %>%
+  group_by(lon, lat) %>%
+  summarise(
+    n = n()
+  )
+
+coordinates(d) <- ~lon + lat
+w <- knn2nb(knearneigh(d, k = 10, longlat = TRUE))
+moran.test(d$n, nb2listw(w))
+local_moran <- as.data.frame(localmoran(d$n, nb2listw(w)))
+
+d %>%
+  as.data.frame() %>%
+  cbind(local_moran) %>%
+  ggplot(aes(lon, lat)) +
+  geom_raster(aes(fill = Ii)) +
+  scale_fill_viridis_c() +
+  coord_quickmap() +
+  theme_dark() +
+  labs(
+    title = "Local Moran's I on Outliers Density",
+    fill = "Local Moran's I"
+  )
+```
+
+Let's save our pared down `properties` table and then get into feature engineering
+
+```{r save-prop-filtered}
+write_feather(properties, "data/properties_17_filtered.feather")
+```
+

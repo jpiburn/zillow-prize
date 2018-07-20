@@ -1,0 +1,10 @@
+# Summary
+
+## Key Findings
+
+## Weak Points of Analysis
+
+imputation method
+need to test more models
+could include more geo related features like interstate density
+argument to be made for transforming then imputing

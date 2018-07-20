@@ -1,0 +1,21 @@
+# Modeling
+
+## Creating A Baseline
+
+## More Complex Models
+
+### XGBoost
+
+## V-Vold Resampling
+
+## Parameter Tuning
+
+### XGBoost Parameters
+
+### Search Techinques
+
+#### Surrogate Search
+
+## Comparing Models
+
+

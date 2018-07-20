@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 test/
+data/
+data-raw/

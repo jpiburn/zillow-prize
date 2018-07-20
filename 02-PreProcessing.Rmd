@@ -1,5 +1,6 @@
 # PreProcessing
 
+The first step for any data driven project is getting to know the data. In this section we will look at the raw data that was provided by the competition and then do a little pre processing that will make the data easier to work with for the rest of the project
 
 ## The Raw Data
 
@@ -15,8 +16,10 @@ The raw data from zillow contains the following data (desrciptions from the the 
 
 * __sample_submission.csv__ - a sample submission file in the correct format
 
+* __zillow_data_dictionary.xlsx__ - Field Definitions and coded value meanings
+
 ### Saving Raw Data Using `feather`
-The `feather` package provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a `.feather` file format to make all other read faster
+The R binding for the [feather](https://github.com/wesm/feather) data store provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a `.feather` file format to make all other read faster
 
 ```{r save-raw-as-feather, eval=FALSE}
 library(feather)
@@ -37,12 +40,11 @@ write_feather(train_17, "data-raw/feather/train_2017.feather")
 
 ## Renaming Variables
 
-Many of the feature names are not very consistant. Let's rename them to something easier to work with
+Many of the feature names are not very consistant. To take advatange of helpful functions from the `tidyverse` set of packages, such as `starts_with()` and `one_of()` Let's rename them to something more consistant and easier to work with.
 
 ### Renaming `properties` Features
 ```{r prop-rename, warning=FALSE, message=FALSE, eval=FALSE}
 library(tidyverse)
-library(feather)
 
 prop_16 <- read_feather("data-raw/feather/properties_2016.feather")
 prop_17 <- read_feather("data-raw/feather/properties_2017.feather")
@@ -108,9 +110,6 @@ names(prop_17) <- names(prop_16)
 
 ### renaming `train` features
 ```{r train-rename, eval=FALSE}
-library(tidyverse)
-library(feather)
-
 trans_16 <- read_feather("data-raw/feather/train_2016_v2.feather")
 trans_17 <- read_feather("data-raw/feather/train_2017.feather")
 
@@ -127,6 +126,8 @@ names(trans_17) <- names(trans_16)
 ```
 
 ### Basic Transformations
+
+Based on the definitions in the `zillow_data_dictionary.xlsx` we can recode some of the features to have be more interpretable while we are exploring.
 
 #### Properties
 ```{r prop-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
@@ -212,6 +213,11 @@ prop_17 <- prop_17 %>%
 
 
 #### Transactions
+
+The transactions tables are where our response variable `log_error` (name changed from orginal `logerror`) and the dates of the transactions are recorded.
+
+To make them easier to work with, let's combine all the transactions into one table and create a few basic transformations of the `date` (name changed from original `transactiondate`)
+
 ```{r trans-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
 library(lubridate)
 
@@ -232,7 +238,7 @@ trans <- trans_16 %>%
 
 ```
 
-
+Save our output
 ```{r save-output, eval=FALSE}
 write_feather(prop_16, "data/properties_16.feather")
 write_feather(prop_17, "data/properties_17.feather")
@@ -242,14 +248,13 @@ write_feather(trans, "data/transactions.feather")
 
 ## Extracting Geographic Information
 
-The raw data contains information on block group ids. We can clean this up and use it to bring in external data like Census infomation. 
+As noted in the \@ref(intro) we are going to break from the rules of the competition and use external information to (hopefully) help improve our predictions. Since the data we are using relate to locations of individual properties and we have each of their geographic coordinates, `latitude` and `longitude` let's use those to get the U.S. Census Geographies they are apart of that we can make use of when adding external information.
+
+The original data contain the fields `rawcensustractandblock` and `censustractandblock` but after trying to parse those into a usable format and failing, I figured it was just easier to use the `latitude` and `longitude` fields and then join that to the Census information.
+
 ```{r prop-geo, eval=FALSE}
 library(sf)
-library(feather)
-library(forcats)
-library(tidyverse)
 library(tidycensus)
-
 
 # NAD83 / California zone 5 (ftUS)
 # https://epsg.io/2229
@@ -273,7 +278,6 @@ properties <- read_feather("data-raw/properties_2017") %>%
     remove = FALSE # keep lat/long fields
     ) %>%
   st_transform(crs_id)
-
 
 census_bgs <- get_acs(
   geography = "block group", 
@@ -328,7 +332,10 @@ properties_geo <- properties_geo %>%
         "Ventura"     = "111"
       )
   )
+```
 
+Now save our geographic features
+```{r save-geo, eval=FALSE}
 # remove geometry b/c feather can't store lists
 # add back in when needed from lat lon
 properties_geo$geometry <- NULL

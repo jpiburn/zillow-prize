@@ -63,6 +63,8 @@
 <link href="libs/dt-core-1.10.12/css/jquery.dataTables.min.css" rel="stylesheet" />
 <link href="libs/dt-core-1.10.12/css/jquery.dataTables.extra.css" rel="stylesheet" />
 <script src="libs/dt-core-1.10.12/js/jquery.dataTables.min.js"></script>
+<link href="libs/dt-ext-fixedcolumns-1.10.12/css/fixedColumns.dataTables.min.css" rel="stylesheet" />
+<script src="libs/dt-ext-fixedcolumns-1.10.12/js/dataTables.fixedColumns.min.js"></script>
 <script src="libs/plotly-binding-4.7.1/plotly.js"></script>
 <script src="libs/typedarray-0.1/typedarray.min.js"></script>
 <link href="libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
@@ -127,8 +129,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="divider"></li>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Welcome</a></li>
 <li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
-<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#purpose"><i class="fa fa-check"></i><b>1.1</b> Purpose</a></li>
-<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#problem"><i class="fa fa-check"></i><b>1.2</b> Problem</a></li>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#problem"><i class="fa fa-check"></i><b>1.1</b> Problem</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#evaluation"><i class="fa fa-check"></i><b>1.2</b> Evaluation</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#initital-thoughts"><i class="fa fa-check"></i><b>1.3</b> Initital Thoughts</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#note-on-using-external-features"><i class="fa fa-check"></i><b>1.4</b> Note on Using External Features</a></li>
 </ul></li>
 <li class="chapter" data-level="2" data-path="preprocessing.html"><a href="preprocessing.html"><i class="fa fa-check"></i><b>2</b> PreProcessing</a><ul>
 <li class="chapter" data-level="2.1" data-path="preprocessing.html"><a href="preprocessing.html#the-raw-data"><i class="fa fa-check"></i><b>2.1</b> The Raw Data</a><ul>
@@ -141,45 +145,37 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="2.3" data-path="preprocessing.html"><a href="preprocessing.html#extracting-geographic-information"><i class="fa fa-check"></i><b>2.3</b> Extracting Geographic Information</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html"><i class="fa fa-check"></i><b>3</b> Exploratory Analysis</a><ul>
-<li class="chapter" data-level="3.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#response-variable"><i class="fa fa-check"></i><b>3.1</b> Response Variable</a><ul>
-<li class="chapter" data-level="3.1.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#transactions-over-time"><i class="fa fa-check"></i><b>3.1.1</b> Transactions Over Time</a></li>
-<li class="chapter" data-level="3.1.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#map"><i class="fa fa-check"></i><b>3.1.2</b> Map</a></li>
+<li class="chapter" data-level="3" data-path="eda.html"><a href="eda.html"><i class="fa fa-check"></i><b>3</b> Exploratory Analysis</a><ul>
+<li class="chapter" data-level="3.1" data-path="eda.html"><a href="eda.html#response-variable"><i class="fa fa-check"></i><b>3.1</b> Response Variable</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="eda.html"><a href="eda.html#transactions-over-time"><i class="fa fa-check"></i><b>3.1.1</b> Transactions Over Time</a></li>
+<li class="chapter" data-level="3.1.2" data-path="eda.html"><a href="eda.html#spatial-distribution-of-log_error"><i class="fa fa-check"></i><b>3.1.2</b> Spatial Distribution of <code>log_error</code></a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#predictor-variables"><i class="fa fa-check"></i><b>3.2</b> Predictor Variables</a><ul>
-<li class="chapter" data-level="3.2.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#missingness"><i class="fa fa-check"></i><b>3.2.1</b> Missingness</a></li>
-<li class="chapter" data-level="3.2.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#numeric-features"><i class="fa fa-check"></i><b>3.2.2</b> Numeric Features</a></li>
-<li class="chapter" data-level="3.2.3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#numeric-outliers"><i class="fa fa-check"></i><b>3.2.3</b> Numeric Outliers</a></li>
-<li class="chapter" data-level="3.2.4" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#categorical-features"><i class="fa fa-check"></i><b>3.2.4</b> Categorical Features</a></li>
+<li class="chapter" data-level="3.2" data-path="eda.html"><a href="eda.html#predictor-variables"><i class="fa fa-check"></i><b>3.2</b> Predictor Variables</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="eda.html"><a href="eda.html#missingness"><i class="fa fa-check"></i><b>3.2.1</b> Missingness</a></li>
+<li class="chapter" data-level="3.2.2" data-path="eda.html"><a href="eda.html#numeric-features"><i class="fa fa-check"></i><b>3.2.2</b> Numeric Features</a></li>
+<li class="chapter" data-level="3.2.3" data-path="eda.html"><a href="eda.html#numeric-outliers"><i class="fa fa-check"></i><b>3.2.3</b> Numeric Outliers</a></li>
+<li class="chapter" data-level="3.2.4" data-path="eda.html"><a href="eda.html#categorical-features"><i class="fa fa-check"></i><b>3.2.4</b> Categorical Features</a></li>
 </ul></li>
-<li class="chapter" data-level="3.3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#exploring-log_error-a-little-more"><i class="fa fa-check"></i><b>3.3</b> Exploring <code>log_error</code> A little More</a></li>
+<li class="chapter" data-level="3.3" data-path="eda.html"><a href="eda.html#exploring-log_error-a-little-more"><i class="fa fa-check"></i><b>3.3</b> Exploring <code>log_error</code> A little More</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="feature-engineering.html"><a href="feature-engineering.html"><i class="fa fa-check"></i><b>4</b> Feature Engineering</a><ul>
-<li class="chapter" data-level="4.1" data-path="feature-engineering.html"><a href="feature-engineering.html#creating-new-features"><i class="fa fa-check"></i><b>4.1</b> Creating New Features</a><ul>
-<li class="chapter" data-level="4.1.1" data-path="feature-engineering.html"><a href="feature-engineering.html#internal-features"><i class="fa fa-check"></i><b>4.1.1</b> Internal Features</a></li>
-<li class="chapter" data-level="4.1.2" data-path="feature-engineering.html"><a href="feature-engineering.html#external-features"><i class="fa fa-check"></i><b>4.1.2</b> External Features</a></li>
+<li class="chapter" data-level="4" data-path="feat-eng.html"><a href="feat-eng.html"><i class="fa fa-check"></i><b>4</b> Feature Engineering</a><ul>
+<li class="chapter" data-level="4.1" data-path="feat-eng.html"><a href="feat-eng.html#creating-new-features"><i class="fa fa-check"></i><b>4.1</b> Creating New Features</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="feat-eng.html"><a href="feat-eng.html#internal-features"><i class="fa fa-check"></i><b>4.1.1</b> Internal Features</a></li>
+<li class="chapter" data-level="4.1.2" data-path="feat-eng.html"><a href="feat-eng.html#external-features"><i class="fa fa-check"></i><b>4.1.2</b> External Features</a></li>
 </ul></li>
-<li class="chapter" data-level="4.2" data-path="feature-engineering.html"><a href="feature-engineering.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
-<li class="chapter" data-level="4.3" data-path="feature-engineering.html"><a href="feature-engineering.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
+<li class="chapter" data-level="4.2" data-path="feat-eng.html"><a href="feat-eng.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
+<li class="chapter" data-level="4.3" data-path="feat-eng.html"><a href="feat-eng.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
-<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#creating-a-baseline"><i class="fa fa-check"></i><b>6.1</b> Creating A Baseline</a></li>
-<li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#more-complex-models"><i class="fa fa-check"></i><b>6.2</b> More Complex Models</a><ul>
-<li class="chapter" data-level="6.2.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.2.1</b> XGBoost</a></li>
-</ul></li>
-<li class="chapter" data-level="6.3" data-path="modeling.html"><a href="modeling.html#v-vold-resampling"><i class="fa fa-check"></i><b>6.3</b> V-Vold Resampling</a></li>
-<li class="chapter" data-level="6.4" data-path="modeling.html"><a href="modeling.html#parameter-tuning"><i class="fa fa-check"></i><b>6.4</b> Parameter Tuning</a><ul>
-<li class="chapter" data-level="6.4.1" data-path="modeling.html"><a href="modeling.html#xgboost-parameters"><i class="fa fa-check"></i><b>6.4.1</b> XGBoost Parameters</a></li>
-<li class="chapter" data-level="6.4.2" data-path="modeling.html"><a href="modeling.html#search-techinques"><i class="fa fa-check"></i><b>6.4.2</b> Search Techinques</a></li>
-</ul></li>
-<li class="chapter" data-level="6.5" data-path="modeling.html"><a href="modeling.html#comparing-models"><i class="fa fa-check"></i><b>6.5</b> Comparing Models</a></li>
+<li class="chapter" data-level="6.0.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.0.1</b> XGBoost</a></li>
+<li class="chapter" data-level="6.0.2" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.0.2</b> creating our scoring function</a></li>
+<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#make-predictions-with-tuned-parameters"><i class="fa fa-check"></i><b>6.1</b> Make Predictions with Tuned Parameters</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="summary.html"><a href="summary.html"><i class="fa fa-check"></i><b>7</b> Summary</a><ul>
 <li class="chapter" data-level="7.1" data-path="summary.html"><a href="summary.html#key-findings"><i class="fa fa-check"></i><b>7.1</b> Key Findings</a></li>
 <li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#weak-points-of-analysis"><i class="fa fa-check"></i><b>7.2</b> Weak Points of Analysis</a></li>
 </ul></li>
-<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
 

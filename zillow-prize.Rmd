@@ -1,0 +1,2140 @@
+--- 
+title: "Zillow Prize Modeling"
+author: "Jesse Piburn"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+description: "This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example."
+---
+
+# Welcome {-}
+This is a _sample_ book written in **Markdown**. You can use anything that Pandoc's Markdown supports, e.g., a math equation $a^2 + b^2 = c^2$.
+
+The **bookdown** package can be installed from CRAN or Github:
+
+```{r eval=FALSE}
+install.packages("bookdown")
+# or the development version
+# devtools::install_github("rstudio/bookdown")
+```
+
+Remember each Rmd file contains one and only one chapter, and a chapter is defined by the first-level heading `#`.
+
+To compile this example to PDF, you need XeLaTeX. You are recommended to install TinyTeX (which includes XeLaTeX): <https://yihui.name/tinytex/>.
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+<!--chapter:end:index.Rmd-->
+
+# Introduction {#intro}
+
+This project is meant to serve as an example workflow for making predictive models. The sections of the book are roughly broken into the major steps that are a part of the modeling process.
+
+As with many things in life, their is rarely a one-size-fits-all, always correct, way of doing something and making a predictive model is no different. In light of that, I want to stress that the workflow and methods used in this book are meant to be illustrative not authoritative.
+
+The only always correct answer in predictive modeling is, "It depends." 
+
+
+## Problem
+
+The problem we will workthrough in this book is the [Zillow Prize](https://www.kaggle.com/c/zillow-prize-1) compeitition on that took place on Kaggle. Although it is now closed, it provides a good problemset for us to work through.
+
+From the site
+>>>In this million-dollar competition, participants will develop an algorithm that makes predictions about the future sale prices of homes. The contest is structured into two rounds, the qualifying round which opens May 24, 2017 and the private round for the 100 top qualifying teams that opens on Feb 1st, 2018. In the qualifying round, you’ll be building a model to improve the Zestimate residual error. In the final round, you’ll build a home valuation algorithm from the ground up, using external data sources to help engineer new features that give your model an edge over the competition.
+
+## Evaluation
+
+The submission were evaluated based on the Mean Absolute Error between the predicted `logerror` and the actual `logerror`
+
+The `logerror` is defined as
+
+$$logerror = log(Zestimate) - log(SalePrice)$$
+
+while Mean Absolute Error is defined as
+
+$$MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n} $$
+
+## Initital Thoughts
+
+> "Location, Location, Location."
+>
+> --- Some Real Estate Guy
+
+The above quote is of course the number one rule of real estate. Though out this modeling process, let's try to keep this idea in mind when we are exploring, creating new features, and modeling the data.
+
+An additional interesting thing about this problem is that it can be thought about as creating a model to predict where Zillow's model is bad. We aren't trying to predict home prices, we are predicting where Zillow had a bad estimate of home prices, so the residuals of their Zestimate model.Based on this idea, let's create some new features
+
+
+## Note on Using External Features
+In the original competition, you were only allowed to use the features transformations of those included in the data they provided. Since our goal is to provide an illustrative workflow for making a predictive model in general and not actually competing in the competition, we are not going to adhere to that rule and use a few external sources of information.
+
+<!--chapter:end:01-intro.Rmd-->
+
+# PreProcessing
+
+The first step for any data driven project is getting to know the data. In this section we will look at the raw data that was provided by the competition and then do a little pre processing that will make the data easier to work with for the rest of the project
+
+## The Raw Data
+
+The raw data from zillow contains the following data (desrciptions from the the data page)
+
+* __properties_2016.csv__ - all the properties with their home features for 2016. Note: Some 2017 new properties don't have any data yet except for their parcelid's. Those data points should be populated when properties_2017.csv is available.
+
+* __properties_2017.csv__ - all the properties with their home features for 2017 (released on 10/2/2017)
+
+* __train_2016.csv__ - the training set with transactions from 1/1/2016 to 12/31/2016
+
+* __train_2017.csv__ - the training set with transactions from 1/1/2017 to 9/15/2017 (released on 10/2/2017)
+
+* __sample_submission.csv__ - a sample submission file in the correct format
+
+* __zillow_data_dictionary.xlsx__ - Field Definitions and coded value meanings
+
+### Saving Raw Data Using `feather`
+The R binding for the [feather](https://github.com/wesm/feather) data store provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a `.feather` file format to make all other read faster
+
+```{r save-raw-as-feather, eval=FALSE}
+library(feather)
+library(readr)
+
+dir.create("data-raw/feather")
+
+prop_16 <- read_csv("data-raw/properties_2016.csv")
+prop_17 <- read_csv("data-raw/properties_2017.csv")
+train_16 <- read_csv("data-raw/train_2016_v2.csv")
+train_17 <- read_csv("data-raw/train_2017.csv")
+
+write_feather(prop_16, "data-raw/feather/properties_2016.feather")
+write_feather(prop_17, "data-raw/feather/properties_2017.feather")
+write_feather(train_16, "data-raw/feather/train_2016_v2.feather")
+write_feather(train_17, "data-raw/feather/train_2017.feather")
+```
+
+## Renaming Variables
+
+Many of the feature names are not very consistant. To take advatange of helpful functions from the `tidyverse` set of packages, such as `starts_with()` and `one_of()` Let's rename them to something more consistant and easier to work with.
+
+### Renaming `properties` Features
+```{r prop-rename, warning=FALSE, message=FALSE, eval=FALSE}
+library(tidyverse)
+
+prop_16 <- read_feather("data-raw/feather/properties_2016.feather")
+prop_17 <- read_feather("data-raw/feather/properties_2017.feather")
+
+prop_16 <- prop_16 %>% 
+  rename(
+    id_parcel = parcelid,
+    build_year = yearbuilt,
+    area_basement = basementsqft,
+    area_patio = yardbuildingsqft17,
+    area_shed = yardbuildingsqft26, 
+    area_pool = poolsizesum,  
+    area_lot = lotsizesquarefeet, 
+    area_garage = garagetotalsqft,
+    area_firstfloor_finished_1 = finishedfloor1squarefeet,
+    area_firstfloor_finished_2 = finishedsquarefeet50,
+    area_living_finished_calc = calculatedfinishedsquarefeet,
+    area_base = finishedsquarefeet6,
+    area_living_finished = finishedsquarefeet12,
+    area_living_perimeter = finishedsquarefeet13,
+    area_total = finishedsquarefeet15,  
+    num_unit = unitcnt, 
+    num_story = numberofstories,  
+    num_room = roomcnt,
+    num_bathroom = bathroomcnt,
+    num_bedroom = bedroomcnt,
+    num_bathroom_calc = calculatedbathnbr,
+    num_bath = fullbathcnt,  
+    num_75_bath = threequarterbathnbr, 
+    num_fireplace = fireplacecnt,
+    num_pool = poolcnt,  
+    num_garage = garagecarcnt,  
+    region_county = regionidcounty,
+    region_city = regionidcity,
+    region_zip = regionidzip,
+    region_neighbor = regionidneighborhood,  
+    tax_total = taxvaluedollarcnt,
+    tax_building = structuretaxvaluedollarcnt,
+    tax_land = landtaxvaluedollarcnt,
+    tax_property = taxamount,
+    tax_year = assessmentyear,
+    tax_delinquency = taxdelinquencyflag,
+    tax_delinquency_year = taxdelinquencyyear,
+    zoning_property = propertyzoningdesc,
+    zoning_landuse = propertylandusetypeid,
+    zoning_landuse_county = propertycountylandusecode,
+    str_flag_fireplace = fireplaceflag, 
+    str_flag_tub = hashottuborspa,
+    str_quality = buildingqualitytypeid,
+    str_framing = buildingclasstypeid,
+    str_material = typeconstructiontypeid,
+    str_deck = decktypeid,
+    str_story = storytypeid,
+    str_heating = heatingorsystemtypeid,
+    str_aircon = airconditioningtypeid,
+    str_arch_style = architecturalstyletypeid
+  )
+
+# use 2016 names to rename 17
+names(prop_17) <- names(prop_16)
+
+```
+
+### renaming `train` features
+```{r train-rename, eval=FALSE}
+trans_16 <- read_feather("data-raw/feather/train_2016_v2.feather")
+trans_17 <- read_feather("data-raw/feather/train_2017.feather")
+
+trans_16 <- trans_16 %>% 
+  rename(
+  id_parcel = parcelid,
+  date = transactiondate,
+  log_error = logerror
+  )
+
+# use 2016 names to rename 17
+names(trans_17) <- names(trans_16)
+
+```
+
+### Basic Transformations
+
+Based on the definitions in the `zillow_data_dictionary.xlsx` we can recode some of the features to have be more interpretable while we are exploring.
+
+#### Properties
+```{r prop-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
+library(forcats)
+
+prop_16 <- prop_16 %>%
+  mutate(
+    tax_delinquency = ifelse(tax_delinquency == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_fireplace = ifelse(str_flag_fireplace == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_tub = ifelse(str_flag_tub == "Y", "Yes", "No") %>%
+      as_factor(),
+    zoning_landuse = factor(zoning_landuse, levels = sort(unique(zoning_landuse))),
+    zoning_landuse = fct_recode(zoning_landuse,
+      "Commercial/Office/Residential Mixed Used" = "31", 
+      "Multi-Story Store"                        = "46",
+      "Store/Office (Mixed Use)"                 = "47",
+      "Duplex (2 Units Any Combination)"         = "246",
+      "Triplex (3 Units Any Combination)"        = "247",
+      "Quadruplex (4 Units Any Combination)"     = "248",
+      "Residential General"                      = "260",
+      "Single Family Residential"                = "261",
+      "Rural Residence"                          = "262",
+      "Mobile Home"                              = "263",
+      "Townhouse"                                = "264",
+      "Cluster Home"                             = "265",
+      "Condominium"                              = "266",
+      "Cooperative"                              = "267",
+      "Row House"                                = "268",
+      "Planned Unit Development"                 = "269",
+      "Residential Common Area"                  = "270",
+      "Timeshare"                                = "271",
+      "Bungalow"                                 = "273",
+      "Zero Lot Line"                            = "274",
+      "Manufactured Modular Prefabricated Homes" = "275",
+      "Patio Home"                               = "276",
+      "Inferred Single Family Residential"       = "279",
+      "Vacant Land - General"                    = "290",
+      "Residential Vacant Land"                  = "291"
+      )
+    )
+
+prop_17 <- prop_17 %>%
+  mutate(
+    tax_delinquency = ifelse(tax_delinquency == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_fireplace = ifelse(str_flag_fireplace == "Y", "Yes", "No") %>%
+      as_factor(),
+    str_flag_tub = ifelse(str_flag_tub == "Y", "Yes", "No") %>%
+      as_factor(),
+    zoning_landuse = factor(zoning_landuse, levels = sort(unique(zoning_landuse))),
+    zoning_landuse = fct_recode(zoning_landuse,
+      "Commercial/Office/Residential Mixed Used" = "31", 
+      "Multi-Story Store"                        = "46",
+      "Store/Office (Mixed Use)"                 = "47",
+      "Duplex (2 Units Any Combination)"         = "246",
+      "Triplex (3 Units Any Combination)"        = "247",
+      "Quadruplex (4 Units Any Combination)"     = "248",
+      "Residential General"                      = "260",
+      "Single Family Residential"                = "261",
+      "Rural Residence"                          = "262",
+      "Mobile Home"                              = "263",
+      "Townhouse"                                = "264",
+      "Cluster Home"                             = "265",
+      "Condominium"                              = "266",
+      "Cooperative"                              = "267",
+      "Row House"                                = "268",
+      "Planned Unit Development"                 = "269",
+      "Residential Common Area"                  = "270",
+      "Timeshare"                                = "271",
+      "Bungalow"                                 = "273",
+      "Zero Lot Line"                            = "274",
+      "Manufactured Modular Prefabricated Homes" = "275",
+      "Patio Home"                               = "276",
+      "Inferred Single Family Residential"       = "279",
+      "Vacant Land - General"                    = "290",
+      "Residential Vacant Land"                  = "291"
+      )
+    )
+
+```
+
+
+#### Transactions
+
+The transactions tables are where our response variable `log_error` (name changed from orginal `logerror`) and the dates of the transactions are recorded.
+
+To make them easier to work with, let's combine all the transactions into one table and create a few basic transformations of the `date` (name changed from original `transactiondate`)
+
+```{r trans-basic-transform, warning=FALSE, message=FALSE, eval=FALSE}
+library(lubridate)
+
+# combine transactions into one data frame
+trans <- trans_16 %>%
+  bind_rows(trans_17) %>%
+  mutate(
+    abs_log_error = abs(log_error),
+    year = year(date),
+    month_year = make_date(year(date), month(date)),
+    month = month(date, label = TRUE),
+    week = floor_date(date, unit = "week"),
+    week_of_year = week(date),
+    week_since_start = (min(date) %--% date %/% dweeks()) + 1,
+    wday = wday(date, label = TRUE),
+    day_of_month = day(date)
+  )
+
+```
+
+Save our output
+```{r save-output, eval=FALSE}
+write_feather(prop_16, "data/properties_16.feather")
+write_feather(prop_17, "data/properties_17.feather")
+write_feather(trans, "data/transactions.feather")
+```
+
+
+## Extracting Geographic Information
+
+As noted in the \@ref(intro) we are going to break from the rules of the competition and use external information to (hopefully) help improve our predictions. Since the data we are using relate to locations of individual properties and we have each of their geographic coordinates, `latitude` and `longitude` let's use those to get the U.S. Census Geographies they are apart of that we can make use of when adding external information.
+
+The original data contain the fields `rawcensustractandblock` and `censustractandblock` but after trying to parse those into a usable format and failing, I figured it was just easier to use the `latitude` and `longitude` fields and then join that to the Census information.
+
+```{r prop-geo, eval=FALSE}
+library(sf)
+library(tidycensus)
+
+# NAD83 / California zone 5 (ftUS)
+# https://epsg.io/2229
+crs_id <- 2229
+
+api_key <- Sys.getenv("CENSUS_API_KEY")
+census_api_key(api_key)
+
+# some obs have no data at all included lat/long
+# the original lat / lon are mulitpled by 10e5 so divide to
+# get lat lon back when converting to sf
+properties <- read_feather("data-raw/properties_2017") %>% 
+  filter(!is.na(latitude)) %>%
+  mutate(
+    lat = latitude / 10e5,
+    lon = longitude / 10e5
+    ) %>%
+  st_as_sf(
+    coords = c("lon", "lat"), 
+    crs = 4326, # WGS 84
+    remove = FALSE # keep lat/long fields
+    ) %>%
+  st_transform(crs_id)
+
+census_bgs <- get_acs(
+  geography = "block group", 
+  variables = "B19013_001", 
+  state = "CA",
+  county = c("Los Angeles", "Orange", "Ventura"), 
+  geometry = TRUE, 
+  keep_geo_vars = TRUE
+  ) %>%
+  st_transform(crs_id)
+
+# inner join
+# due to lat / lon error some points didn't intersect
+# with block groups left = FALSE is inner join
+properties_geo <- properties %>%
+  st_join(census_bgs, left = FALSE)
+
+# find all of the points that didn't intersect
+# buffer them and then join to closest block
+# then add back the already joined points
+# the buffer distance I just played around with until
+# all points joined with a block group
+properties_geo <- properties %>%
+  filter(!parcelid %in% properties_geo$parcelid) %>%
+  st_buffer(dist = 1500) %>% # units are in us-ft based on crs_id
+  st_join(census_bgs, left = FALSE, largest = TRUE) %>%
+  rbind(properties_geo)
+
+
+# remove geometry b/c feather can't store lists
+properties_geo <- properties_geo %>%
+  select(
+    id_parcel = parcelid,
+    id_geo_state = STATEFP,
+    id_geo_county = COUNTYFP,
+    id_geo_tract = TRACTCE,
+    id_geo_bg = BLKGRPCE,
+    id_geo_bg_fips = GEOID,
+    id_geo_bg_name = NAME.y,
+    geo_bg_arealand = ALAND,
+    geo_bg_areawater = AWATER,
+    lat, 
+    lon
+    ) %>%
+  mutate(
+    id_geo_county_fips = paste0(id_geo_state, id_geo_county),
+    id_geo_tract_fips = paste0(id_geo_county_fips, id_geo_tract),
+    id_geo_county_name = factor(id_geo_county) %>%
+      fct_recode(
+        "Los Angeles" = "037",
+        "Orange"      = "059",
+        "Ventura"     = "111"
+      )
+  )
+```
+
+Now save our geographic features
+```{r save-geo, eval=FALSE}
+# remove geometry b/c feather can't store lists
+# add back in when needed from lat lon
+properties_geo$geometry <- NULL
+
+write_feather(properties_geo, "data/properties_geo_only.feather")
+```
+
+<!--chapter:end:02-PreProcessing.Rmd-->
+
+# Exploratory Analysis {#eda}
+
+After \@ref(PreProcessing) the next step is doing exploratory data analysis (EDA). I can't stess enough how critical this step is. It is tempting to want to jump right into making models and then start improving and tweaking them from there, but this can quickly take you down a rabbit hole, waste your time, and generally make you sad.
+
+The time you spend doing EDA will pay dividends later.
+
+Below we are first going to look at only our response variable `log_error` after that we will look at the predictor features in `properties`. Once we get a good handle on both of those, we'll look at how our response variable `log_error` varies across the predictors in `properties`
+
+Throughout this section we will progressively pare down features in our `properties` data due to common things such as, missingness and redundancy, to only the features that we are going to continue with into the next stages.
+
+
+```{r, warning=FALSE, message=FALSE}
+library(skimr)
+library(tidyverse)
+library(feather)
+library(DataExplorer)
+
+trans <- read_feather("data/transactions.feather")
+```
+
+
+## Response Variable
+`log_error` something something text come back to when the processing is finished
+```{r skim-trans, warning=FALSE, out.width="100%", cache=TRUE}
+skim(trans) %>%
+  skimr::pander()
+```
+
+
+```{r log-error-dist-all, fig.cap="Distribution of Log Error", message=FALSE, cache=TRUE}
+trans %>% 
+  ggplot(aes(x = log_error)) + 
+  geom_histogram(bins=400, fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+```{r log-error-dist-95, fig.cap="Distribution of Log Error Between 5 and 95 Percentile", message=FALSE, cache=TRUE}
+trans %>% 
+  filter(
+    log_error > quantile(log_error, probs = c(.05)),
+    log_error < quantile(log_error, probs = c(.95))
+  ) %>%
+  ggplot(aes(x = log_error)) + 
+  geom_histogram(fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+
+```{r abs-log-error-dist-95, fig.cap="Distribution of Absolute value of Log Error Between 5 and 95 Percentile", cache=TRUE}
+trans %>% 
+  filter(
+    log_error > quantile(abs_log_error, probs = c(.05)),
+    log_error < quantile(abs_log_error, probs = c(.95))
+  ) %>%
+  ggplot(aes(x = abs_log_error)) + 
+  geom_histogram(fill = "red", alpha = 0.5) +
+  theme_bw()
+```
+
+```{r avg-le-by-month, fig.cap="Average Log Error by Month" ,cache=TRUE}
+trans %>% 
+  group_by(month_year) %>% 
+  summarise(mean_log_error = mean(log_error)) %>% 
+  ggplot(aes(x = month_year, y = mean_log_error)) + 
+  geom_line(size = 1, colour = "red") +
+  geom_point(size = 3, colour = "red") + 
+  theme_bw()
+```
+
+```{r avg-le-by-month-year, fig.cap="Average Log Error by Month. 2017 Looks to have a higher baseline" ,cache=TRUE}
+trans %>% 
+  group_by(month_year, year, month) %>% 
+  summarise(mean_log_error = mean(log_error)) %>%  
+  ungroup() %>%
+  ggplot(aes(x = as.numeric(month), y = mean_log_error)) +
+  geom_path(aes(colour = as.factor(year)), size = 1) +
+  theme_bw() +
+  ylim(c(0, .03)) +
+  scale_x_continuous(breaks = 1:12, labels = levels(trans$month)) + 
+  labs(
+    colour = NULL,
+    x = "month"
+  )
+```
+
+
+```{r avg-le-by-week, fig.cap="Average Log Error by Week", message=FALSE, cache=TRUE}
+trans %>%
+  group_by(week_since_start) %>%
+  summarise(mean_log_error = mean(log_error)) %>%
+  ggplot(aes(x = week_since_start, y = mean_log_error)) + 
+  geom_line(colour = "red", size = 1) +
+  geom_smooth() + 
+  theme_bw()
+```
+
+### Transactions Over Time
+
+
+```{r trans-per-week, fig.cap="Number of Transactions per Week. The dip in the middle coorisponds to the hold out testing data", message=FALSE ,cache=TRUE}
+trans %>% 
+  group_by(week_since_start) %>% 
+  summarise(n = n()) %>% 
+  ggplot(aes(x = week_since_start, y = n)) +
+  geom_line(colour = "red", size = 1) +
+  theme_bw() +
+  labs(
+    y = "Numeber of Transactions"
+  )
+```
+
+
+```{r trans-by-wday, fig.cap="Number of Transactions by Day of the Week.", message=FALSE, cache=TRUE}
+trans %>% 
+  group_by(wday) %>% 
+  count() %>% 
+  ggplot(aes(x = wday, y = n)) +
+  geom_bar(stat = "identity", fill = "red", alpha = 0.5) + 
+  theme_bw()
+```
+
+### Spatial Distribution of `log_error`
+```{r, map-log-error, fig.cap="Distribution of Log Errors", message=FALSE, warning=FALSE, out.width="100%", cache=TRUE}
+library(leaflet)
+library(leaflet.extras)
+
+read_feather("data/properties_geo_only.feather") %>%
+  right_join(trans, by = "id_parcel") %>%
+  filter(
+    !is.na(lat)
+    ) %>%
+leaflet() %>% 
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addHeatmap(lng=~lon, lat=~lat, intensity = ~log_error, 
+             radius = 5, minOpacity = 0.2, cellSize = 6)
+
+```
+
+
+## Predictor Variables
+
+Now lets take a look at the `properties` dataset. Based on the descriptions from Kaggle, it seem's like the `properties_17.csv` has updated information and is a replacement from that of `properties_16.csv`. For our purposes we are only going to use `properties_17.csv`, however given more space, it would be interesting to look into the differences in these files to see if there were any patterns that could be useful.   
+
+```{r read-prop}
+properties <- read_feather("data/properties_17.feather")
+```
+
+```{r skim-prop, cache=TRUE}
+skim(properties) %>%
+  skimr::pander()
+```
+
+### Missingness
+
+Missing values in data is a cold cruel reality. It is one of the most contraining factors there is when it comes to predictive power. Having a good understanding of the prevalence of missing values and any patterns to them is needed to make the most out of what data you do have.
+
+```{r miss-plot, fig.asp=1.2, fig.cap="Completeness by Feature. Many are extremely sparse"}
+missing_data <- plot_missing(properties, theme = theme_bw())
+
+missing_data
+```
+
+There seem to be quite a lot of missing features. For now lets remove the ones that are over 50% and continue on with those. We could come back to the ones we dropped and try to recover some of those missing values with more sophisticated methods, for example we could impute the missing values based on their spatial neighbors but for now we will continue with the ones that have over 50% of their values.
+
+A few of the features, `rawcensustractandblock`, `fips`, and `censustractandblock`, and `region_county` are ID fields for their census geography units. Since we have already extracted that information earlier in `properties_geo` we will drop them here as well since we can add the information contained in those features in a cleaner format later.
+
+Additionally, based on the descriptions, `zoning_landuse`, `zoning_landuse_county`, and `zoning_property` all seem to contain pretty similar information.Since the number of unique categories are fairly large for each one, if they are redundant they could add needless complexity and computation time to our model. Let's use a chi-squared test to see what it looks like
+```{r chi-1, warning=FALSE}
+chisq.test(properties$zoning_landuse, properties$zoning_property)
+```
+
+```{r chi-2, warning=FALSE}
+chisq.test(properties$zoning_landuse, properties$zoning_landuse_county)
+```
+
+Based on that, let's remove `zoning_property` and `zoning_landuse_county`
+
+```{r remove-missing}
+
+features_to_keep <- missing_data %>% 
+  filter(
+    pct_missing <= .50,
+    !feature %in% c("rawcensustractandblock", "fips", 
+                    "censustractandblock", "region_county", 
+                    "zoning_property", "zoning_landuse_county")
+    ) %>%
+  select(feature) %>% 
+  .$feature %>% 
+  as.character()
+
+properties <- properties %>%
+  select(features_to_keep)
+
+```
+
+
+
+### Numeric Features
+
+Lets look at the histograms of all the numeric features
+```{r num-hist, cache=TRUE, fig.cap="Distriubtions of All Numeric Features"}
+
+properties %>%
+  select(
+    -id_parcel
+  ) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+
+
+Looking at the histograms a few things become obvious. There are huge outliers in many of the features and there are some features that are currently encoded as numeric but should not be treated as such. For example, `str_quality` is an ordinal scale 1 (best qaulity) to 12 (worst) but if we leave them as numeric they will be treated as ratio. `str_heating` is nominal so the order doesn't have meaning. Other that need to be changed are `region_city`, `region_zip`
+
+Once we do this, we'll look again at the relationships between our numeric features.
+
+```{r turn-num-to-nom}
+properties <- properties %>%
+  mutate(
+    str_quality = factor(str_quality, 
+                         levels = min(str_quality, na.rm = TRUE):max(str_quality, na.rm = TRUE), 
+                         ordered = TRUE),
+    str_heating = factor(str_heating,
+                         levels = na.omit(unique(str_heating)),
+                         ordered = FALSE),
+    region_city = factor(region_city,
+                         levels = na.omit(unique(region_city)),
+                         ordered = FALSE),
+    region_zip = factor(region_zip,
+                         levels = na.omit(unique(region_zip)),
+                         ordered = FALSE)
+  )
+
+```
+
+
+
+### Numeric Outliers
+
+Based on the histograms there looks to be lots of outliers in many of our numeric features. Two groups of features pop out, the `num_*` features and the `tax_*`features. Let's take a closer look.
+
+```{r num-outlier, cache=TRUE, fig.cap="Distriubtions of 'num_*' Features"}
+
+properties %>%
+  select(starts_with("num_")) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+Looking at the `num_bathroom`, `num_bathroom_calc`, `num_bath` is pretty interesting. `num_bathroom` was one of the most complete features we had however, looking at the distributions, it seems strange that there would be so many houses with `0` bathrooms.
+```{r}
+sum(properties$num_bathroom == 0, na.rm = TRUE)
+```
+```{r}
+sum(properties$num_bathroom_calc == 0, na.rm = TRUE)
+```
+Now for comparing all 3
+```{r bath-compare}
+properties %>% 
+  group_by(
+    num_bathroom_calc, 
+    num_bath, 
+    num_bathroom
+    ) %>% 
+  count() %>%
+  DT::datatable()
+```
+
+If you sort by descending by `n` you'll see that one of the most frequent combinations is blank values of `num_bathroom_calc` and `num_bath` which are `NA` values and `0` for `num_bathroom`. Based on this I am interpreting that as either `0` being a coded value for `NA` or it just being wrong. Either way it looks like `num_bathroom_calc` is the one to keep out of all 3, since it has calculations of half-baths as well.
+
+Applying the same logic to `num_room` and `num_bedroom` we can set all values equal to `0` to `NA`. One side effect of this is that the `num_room` feature is now almost 100% missing and not very useful anymore. So we will just remove it.
+
+Quickly looking at `area_living_finished_calc` and `area_living_finished` reveals a similar `*_calc` being a corrected version of the feature. Becasue of this we will go ahead and remove `area_living_finished` as well
+
+```{r remove-bath}
+properties <- properties %>%
+  select(
+    -num_bath,
+    -num_bathroom,
+    -num_room,
+    -area_living_finished
+    ) %>%
+  mutate(
+    num_bedroom = ifelse(num_bedroom == 0, NA, num_bedroom)
+    )
+```
+
+
+
+Now let's look at the tax related features
+
+```{r tax-outlier, cache=TRUE, fig.cap="Distriubtions of 'tax_*' Features"}
+
+properties %>%
+  select(starts_with("tax_")) %>%
+plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
+```
+
+Lets look at the highest values for `tax_total` and see if something jumps out
+```{r}
+properties %>% 
+  mutate(tax_rank = rank(desc(tax_total))) %>% 
+  filter(tax_rank <= 20) %>% 
+  select(
+    zoning_landuse, 
+    starts_with("area_"), 
+    starts_with("tax_")
+    ) %>% 
+  arrange(tax_rank) %>%
+  DT::datatable(
+    extensions = 'FixedColumns',
+    options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+    )
+    )
+```
+
+While the values are extremely large, they appear to look legitimate. We won't remove these, but it does indicate that we should perhaps apply some transformations to our tax features before we start applying our model.
+
+Now a look at the relationships between our remaining numeric features
+
+```{r num-cor-heatmap, out.width="100%", warning=FALSE, message=FALSE, cache=TRUE, fig.cap="Correlation of Numeric Features", fig.asp=1.1}
+library(heatmaply)
+
+properties %>%
+  select(-id_parcel) %>%
+  select_if(is.numeric) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  heatmaply_cor()
+
+```
+
+
+### Categorical Features
+
+```{r prop-bars, cache=TRUE, fig.cap="Distriubtions of All Categorical Features", fig.height=8}
+plot_bar(properties, ggtheme = theme_bw())
+```
+
+The distribution across categories are extremely non-uniform, especially `str_heating` and `zoning_landuse`. This imbalance could cause use some pain later one when trying to fit our model. One way we can avoid some of this pain is by collapsing some of the rare categories into an `other` category. The number of categories we collapse to is not a hard and fast decision, it can be based on number of observations, subject matter expertise, heterogentity of the response variable within categories, or some mix of all of these).
+
+Let's look at what the distribution of `log_error` looks like across these categories.
+```{r le-by-str-qaul, fig.cap="Distribution of Log Error Across Structure Quality Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+
+properties %>%
+  select(
+    id_parcel,
+    str_quality
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(str_quality, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "str_quality"
+  )
+```
+
+```{r le-by-str-heating, fig.cap="Distribution of Log Error Across Heating Type Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+
+properties %>%
+  select(
+    id_parcel,
+    str_heating
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(str_heating, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "str_heating"
+  )
+```
+
+```{r le-by-zoning, fig.cap="Distribution of Log Error Across Zoning Feature", message=FALSE, warning=FALSE}
+library(ggridges)
+
+properties %>%
+  select(
+    id_parcel,
+    zoning_landuse
+  ) %>%
+  right_join(trans, by = "id_parcel") %>%
+  ggplot(aes(x = log_error, y = fct_reorder(zoning_landuse, log_error), fill = factor(..quantile..))) +  
+  stat_density_ridges(
+    geom = "density_ridges_gradient", 
+    calc_ecdf = TRUE, 
+    quantiles = c(0.05, 0.95)
+    ) +
+  scale_fill_manual(
+    name = "Probability", 
+    values = c("#FF0000A0", "#A0A0A0A0", "#0000FFA0"),
+    labels = c("(0, 0.05]", "(0.05, 0.95]", "(0.95, 1]")
+    ) +
+  xlim(c(-0.5, 0.5)) +
+  theme_bw() +
+  labs(
+    y = "zoning_landuse"
+  )
+```
+
+Since the distributions of `log_error` within each category seems well behaved, we will recode them based on number of observations
+
+```{r fact-collapse}
+properties <- properties %>%
+  mutate(
+    str_heating = fct_lump(str_heating, n = 6),
+    zoning_landuse = fct_lump(zoning_landuse, n = 8),
+    str_heating = fct_recode(str_heating,
+      "Central" = "2",
+      "Floor/Wall" = "7",
+      "Solar" = "20",
+      "Forced Air" = "6",
+      "Yes - Type Unknown" = "24",
+      "None" = "13"
+    )
+  )
+
+```
+
+
+## Exploring `log_error` A little More
+
+Now let's join the `properties`  and `properties_geo` tables to our `trans` table of tranactions and their `log_error`'s and explore those
+
+```{r trans-prop}
+trans_prop <- read_feather("data/properties_geo_only.feather") %>%
+  right_join(trans, by = "id_parcel") %>%
+  left_join(properties, by = "id_parcel")
+```
+
+```{r le-bg-box, fig.cap="Outliers and Variability of Mean Absolute Error Dreceases When Neighborhood Sales Increase", fig.asp=0.7}
+trans_prop %>%
+  group_by(id_geo_bg_fips, id_geo_county_name) %>%
+  summarise(
+    n = n(),
+    mean_abs_error = mean(abs_log_error)
+    ) %>%
+  ungroup() %>%
+  mutate(
+    trans_pert = cut(n, breaks = c(seq(0, 100, 10), 350))
+    ) %>%
+  ggplot(aes(x = trans_pert, y = mean_abs_error, colour = id_geo_county_name)) + 
+  geom_boxplot(outlier.size = 1.5, outlier.alpha = 1/3) +
+  theme_bw() +
+  labs(
+    subtitle = "Block Group Average Mean Absolute Error",
+    colour = NULL,
+    x = "Number of Total Transactions per Block Group",
+    y = "Mean Absolute Log Error"
+  )
+```
+
+It looks like Los Angeles is largerly the only county that has information populated for `str_qaulity`
+
+```{r le-zone-box, fig.cap="Log Error by Structure Quality", fig.asp=0.7, out.width="100%"}
+trans_prop %>%
+  ggplot(aes(x = str_quality, y = log_error, colour = id_geo_county_name)) + 
+  geom_boxplot(outlier.size = 1.5, outlier.alpha = 1/3) +
+  theme_bw() +
+  labs(
+    colour = NULL
+  )
+```
+
+```{r, fig.cap="Spatial Distribution of Log Error Outliers", message=FALSE, warning=FALSE, cache=TRUE}
+library(ggmap)
+
+trans_prop_tmp <- trans_prop %>%
+  filter(!is.na(id_geo_county_name)) %>%
+  group_by(
+    id_parcel, 
+    id_geo_county_name
+    ) %>%
+  mutate(
+    log_error_parcel_avg = mean(log_error)
+    ) %>%
+  ungroup() %>%
+  mutate(
+    outlier = ifelse(log_error < quantile(log_error, probs  = .1) | 
+                     log_error > quantile(log_error, probs  = .9), 
+                     "Outlier", "Normal")
+    )
+  
+error_map <- get_map(location = "Los Angeles, CA", 
+                     color="bw", 
+                     crop = FALSE, 
+                     zoom = 9)
+ 
+ggmap(error_map) + 
+  stat_density2d(
+    data = trans_prop_tmp, 
+    aes(x = lon, y = lat, 
+        fill = ..level.., 
+        alpha = ..level..),
+    geom = "polygon", 
+    size = 0.001, 
+    bins = 100
+    ) + 
+  scale_fill_viridis_c() + 
+  scale_alpha(range = c(0.05, 0.95), guide = FALSE) + 
+  facet_wrap(~outlier)
+```
+
+Now lets look at the spatiotemporal distribution of `log_error` outliers
+```{r le-out-month, fig.cap="SpatioTemporal Distribution of Log Error Outliers", out.width="100%", fig.height=15}
+
+trans_prop %>%
+  filter(
+    !is.na(lat),
+    (
+      log_error <= quantile(log_error, probs  = .1) | 
+      log_error >= quantile(log_error, probs  = .9)
+      )
+    ) %>%
+  mutate(
+    lon = round(lon/0.5, digits = 1) * 0.5,
+    lat = round(lat/0.5, digits = 1) * 0.5
+  ) %>%
+  group_by(lon, lat, month_year) %>%
+  summarise(
+    n = n()
+  ) %>%
+ggplot(aes(lon, lat)) +
+  geom_raster(aes(fill = n)) +
+  scale_fill_viridis_c() +
+  facet_wrap(~month_year, ncol = 3) +
+  coord_quickmap() +
+  theme_dark() +
+  labs(
+    subtitle = "Downtown Los Angeles looks to be consistently bad",
+    fill = "Count"
+  ) +
+  theme(
+    axis.text = element_text(size = 5)
+    )
+
+```
+
+At first glance there looks to be a strong spatial and temporal correlation to `log_error`. Let's look more into the spatial correlation.
+
+Moran's I and its variant Local Moran's I, provide a useful measure of the amount of spatial autocorrelation in a variable.
+
+```{r morans-i-outliers, fig.cap="Spatial Autocorrelation of Log Error Outliers", message=FALSE, warning=FALSE, cache.rebuild=TRUE}
+library(spatstat)
+library(spdep)
+
+d <- trans_prop %>%
+  filter(
+    !is.na(lat),
+    (
+      log_error <= quantile(log_error, probs  = .1) | 
+      log_error >= quantile(log_error, probs  = .9)
+      )
+    ) %>%
+  mutate(
+    lon = round(lon/0.1, digits = 1) * 0.1,
+    lat = round(lat/0.1, digits = 1) * 0.1
+  ) %>%
+  group_by(lon, lat) %>%
+  summarise(
+    n = n()
+  )
+
+coordinates(d) <- ~lon + lat
+w <- knn2nb(knearneigh(d, k = 10, longlat = TRUE))
+moran.test(d$n, nb2listw(w))
+local_moran <- as.data.frame(localmoran(d$n, nb2listw(w)))
+
+d %>%
+  as.data.frame() %>%
+  cbind(local_moran) %>%
+  ggplot(aes(lon, lat)) +
+  geom_raster(aes(fill = Ii)) +
+  scale_fill_viridis_c() +
+  coord_quickmap() +
+  theme_dark() +
+  labs(
+    title = "Local Moran's I on Outliers Density",
+    fill = "Local Moran's I"
+  )
+```
+
+Let's save our pared down `properties` table and then get into feature engineering
+
+```{r save-prop-filtered}
+write_feather(properties, "data/properties_17_filtered.feather")
+```
+
+
+<!--chapter:end:03-Explore.Rmd-->
+
+# Feature Engineering {#feat-eng}
+
+After we have done an intital EDA of our data we can start doing some feature engineering, this is where we can create new features such as interaction variables, apply transformations such as centering and scaling, choice how we want to encode our categorical features, and also bring in new external information. 
+
+Just as in \@ref(eda), throughout this section we will progressively updating our `properties` data to include new and transformed features that we are going to continue with into the next stages.
+
+```{r read-prop-filtered, warning=FALSE, message=FALSE, eval=FALSE, echo=FALSE}
+library(feather)
+library(tidyverse)
+
+properties <- read_feather("data/properties_17_filtered.feather")
+properties_geo <- read_feather("data/properties_geo_only.feather")
+trans <- read_feather("data/transactions.feather")
+
+# join all property information
+properties <- properties %>%
+  left_join(properties_geo, by = "id_parcel")
+```
+
+## Creating New Features
+
+> "Everything is related to everything else, but near things are more related than distant things."
+> 
+> - Waldo Tobler
+
+This "First Law of Geography" is something we can take advantage of for creating new features based on our existing ones. In this section we will create based on both data from the Kaggle competition and also examples of external sources as well
+
+
+### Internal Features
+
+Since we have the neighborhood, as defined by `id_geo_bg_fips`, that each parcel is apart of, we can use this to create neighborhood average features.
+
+There are many ways one could define neighborhood for the purposes of using near by parcels, knn for example. Perhaps a more rigourous and certainly more computationly intensive approach would be to estimate the radius at which the spatial autocorrelation of `log_error` is no longer statistically significant using something such as a bootstrapped spline correlogram such as the function `spline.correlog()` provided by the `ncf` package
+
+```{r spline-example, eval=FALSE}
+ncf::spline.correlog(x = lon, y = lat, z = log_error)
+```
+
+For now we will stick with defining our neighborhood by the census block group (`id_geo_bg_fips`) that each parcel is apart of
+
+#### Neigborhood Average `properties` Features
+```{r bg-avg-features, message=FALSE, warning=FALSE, eval=FALSE}
+
+bg_avg_features <- properties %>%
+  group_by(id_geo_bg_fips) %>%
+  select(-id_parcel) %>%
+  select_if(is.numeric) %>%
+  summarise_all(mean, na.rm = TRUE) %>%
+  filter(
+    !is.na(id_geo_bg_fips)
+    )
+
+names(bg_avg_features) <- paste0("bg_avg_", names(bg_avg_features))
+names(bg_avg_features)[1] <- "id_geo_bg_fips"
+
+# update the properties table
+properties <- properties %>%
+  left_join(bg_avg_features, by = "id_geo_bg_fips")
+```
+
+#### Rolling Local Average `log_error`
+
+There is a strong spatial and temporal autocorrelation to our response variable `log_error`. To take advantage of this, let's create a few new features based on the rolling average of the local `log_error` values.
+
+Because these features will have values for every day from `min(trans$date)` to `max(trans$date)` we won't join them to our data yet.
+
+```{r roll-feature,eval=FALSE}
+library(tibbletime)
+
+trans_prop <- properties_geo %>%
+  right_join(trans, by = "id_parcel") %>%
+  select(
+    id_parcel,
+    id_geo_bg_fips,
+    id_geo_tract_fips,
+    date,
+    log_error
+  )
+
+# create rolling functions ------------------------------------------------
+
+rolling_sum_7 <- rollify(~sum(.x, na.rm = TRUE), window = 7)
+rolling_sum_28 <- rollify(~sum(.x, na.rm = TRUE), window = 28)
+
+# by block group ----------------------------------------------------------
+
+roll_bg <- create_series(min(trans_prop$date) ~ max(trans_prop$date), 
+                   'daily', class = "Date") %>%
+  tidyr::expand(
+    date, 
+    id_geo_bg_fips = unique(trans_prop$id_geo_bg_fips)
+  ) %>%
+  full_join(trans_prop) %>%
+  group_by(id_geo_bg_fips, date) %>%
+  summarise(
+    sum_log_error = sum(log_error, na.rm = TRUE),
+    sales_total = sum(!is.na(log_error))
+    ) %>%
+  ungroup() %>% 
+  group_by(id_geo_bg_fips) %>%
+  mutate(
+    sum_log_error_7days = rolling_sum_7(sum_log_error),
+    sum_log_error_28days  =  rolling_sum_28(sum_log_error),
+    roll_bg_trans_total_7days = rolling_sum_7(sales_total),
+    roll_bg_trans_total_28days  =  rolling_sum_28(sales_total),
+    roll_bg_avg_log_error_7days = sum_log_error_7days / roll_bg_trans_total_7days,
+    roll_bg_avg_log_error_28days = sum_log_error_28days / roll_bg_trans_total_28days,
+    date = date + lubridate::days(1) # to not include the current day in avg
+  ) %>%
+  select(
+    id_geo_bg_fips,
+    date,
+    roll_bg_trans_total_7days,
+    roll_bg_trans_total_28days,
+    roll_bg_avg_log_error_7days,
+    roll_bg_avg_log_error_28days
+  ) %>%
+  mutate(
+    roll_bg_trans_total_7days = ifelse(is.na(roll_bg_trans_total_7days), 
+                                       0, roll_bg_trans_total_7days),
+    roll_bg_trans_total_28days = ifelse(is.na(roll_bg_trans_total_28days), 
+                                        0, roll_bg_trans_total_28days),
+    roll_bg_avg_log_error_7days = ifelse(is.nan(roll_bg_avg_log_error_7days), 
+                                         0, roll_bg_avg_log_error_7days),
+    roll_bg_avg_log_error_28days = ifelse(is.nan(roll_bg_avg_log_error_28days), 
+                                          0, roll_bg_avg_log_error_28days),
+    roll_bg_avg_log_error_7days = as.numeric(forecast::na.interp(roll_bg_avg_log_error_7days)),
+    roll_bg_avg_log_error_28days = as.numeric(forecast::na.interp(roll_bg_avg_log_error_28days))
+  )
+
+# by tract ----------------------------------------------------------------
+
+roll_tract <- create_series(min(trans_prop$date) ~ max(trans_prop$date), 
+                         'daily', class = "Date") %>%
+  tidyr::expand(
+    date, 
+    id_geo_tract_fips = unique(trans_prop$id_geo_tract_fips)
+  ) %>%
+  full_join(trans_prop) %>%
+  group_by(id_geo_tract_fips, date) %>%
+  summarise(
+    sum_log_error = sum(log_error, na.rm = TRUE),
+    sales_total = sum(!is.na(log_error))
+  ) %>%
+  ungroup() %>% 
+  group_by(id_geo_tract_fips) %>%
+  mutate(
+    sum_log_error_7days = rolling_sum_7(sum_log_error),
+    sum_log_error_28days  =  rolling_sum_28(sum_log_error),
+    roll_tract_trans_total_7days = rolling_sum_7(sales_total),
+    roll_tract_trans_total_28days  =  rolling_sum_28(sales_total),
+    roll_tract_avg_log_error_7days = sum_log_error_7days / roll_tract_trans_total_7days,
+    roll_tract_avg_log_error_28days = sum_log_error_28days / roll_tract_trans_total_28days,
+    date = date + lubridate::days(1) # to not include the current day in avg
+  ) %>%
+  select(
+    id_geo_tract_fips,
+    date,
+    roll_tract_trans_total_7days,
+    roll_tract_trans_total_28days,
+    roll_tract_avg_log_error_7days,
+    roll_tract_avg_log_error_28days
+  ) %>%
+  mutate(
+    roll_tract_trans_total_7days = ifelse(is.na(roll_tract_trans_total_7days), 
+                                          0, roll_tract_trans_total_7days),
+    roll_tract_trans_total_28days = ifelse(is.na(roll_tract_trans_total_28days), 
+                                           0, roll_tract_trans_total_28days),
+    roll_tract_avg_log_error_7days = ifelse(is.nan(roll_tract_avg_log_error_7days), 
+                                            0, roll_tract_avg_log_error_7days),
+    roll_tract_avg_log_error_28days = ifelse(is.nan(roll_tract_avg_log_error_28days), 
+                                             0, roll_tract_avg_log_error_28days),
+    roll_tract_avg_log_error_7days = as.numeric(forecast::na.interp(roll_tract_avg_log_error_7days)),
+    roll_tract_avg_log_error_28days = as.numeric(forecast::na.interp(roll_tract_avg_log_error_28days))
+  )
+
+prop_geo_ids <- properties_geo %>%
+  select(
+    id_parcel,
+    id_geo_bg_fips,
+    id_geo_tract_fips
+  )
+
+write_feather(roll_bg, "data/external-features/roll_features_blockgroup.feather")
+write_feather(roll_tract, "data/external-features/roll_features_tract.feather")
+```
+
+
+### External Features
+
+Breaking from the rules of the actual Kaggle competition, we're going to add in some external features as an example of bringing in other information
+
+#### American Community Survey
+
+The [American Community Survey](https://www.census.gov/programs-surveys/acs/) is a great source of demographic and household data. As an example of using this data let's bring in a few features related to our area of interest. 
+
+In our example here, we are completely ignoring the margin or error for each feature, given more time investigating the information contained in these fields is most likely worth your while.
+
+There are literally thousands you can explore in the ACS. For our example, we are going to stop a little short of that and only add the following
+
+- Fill this in
+    - sub group 1
+    - sub group 2
+- fill this in
+
+```{r acs-data, eval=FALSE, message=FALSE, warning=FALSE}
+library(tidycensus)
+
+api_key <- Sys.getenv("CENSUS_API_KEY")
+census_api_key(api_key)
+
+acs_var_list <- load_variables(2016, "acs5", cache = TRUE)
+
+acs_bg_vars <- c("B25034_001E", "B25034_002E", "B25034_003E", 
+                 "B25034_004E", "B25034_005E", "B25034_006E",
+                 "B25034_007E", "B25034_008E", "B25034_009E",
+                 "B25034_010E", "B25034_011E", "B25076_001E", 
+                 "B25077_001E", "B25078_001E", "B25056_001E", 
+                 "B25002_001E", "B25002_003E", "B25001_001E")
+
+acs_bg_home_value <- acs_var_list %>%
+  filter(grepl("B25075_", x = name))
+
+acs_bg_home_value_vars <- acs_bg_home_value$name
+
+acs_bg_vars <- c(acs_bg_vars, acs_bg_home_value_vars)
+
+acs_bg_data <- get_acs(
+  geography = "block group", 
+  variables = acs_bg_vars, 
+  state = "CA",
+  county = c("Los Angeles", "Orange", "Ventura"),
+  output = "wide",
+  geometry = FALSE, 
+  keep_geo_vars = TRUE
+)
+
+acs_bg_data1 <- acs_bg_data %>%
+  select(
+    id_geo_bg_fips = GEOID,
+    acs_str_yr_total = B25034_001E,
+    acs_str_yr_2014_later = B25034_002E,
+    acs_str_yr_2010_2013 = B25034_003E,
+    acs_str_yr_2000_2009 = B25034_004E,
+    acs_str_yr_1990_1999 = B25034_005E,
+    acs_str_yr_1980_1989 = B25034_006E,
+    acs_str_yr_1970_1979 = B25034_007E,
+    acs_str_yr_1960_1969 = B25034_008E,
+    acs_str_yr_1950_1959 = B25034_009E,
+    acs_str_yr_1940_1949 = B25034_010E,
+    acs_str_yr_1939_earlier = B25034_011E,
+    acs_home_value_lwr = B25076_001E,
+    acs_home_value_med = B25077_001E,
+    acs_home_value_upr = B25078_001E,
+    acs_num_of_renters_total = B25056_001E,
+    acs_num_of_house_units = B25001_001E,
+    acs_occ_status_total = B25002_001E,
+    acs_occ_status_vacant = B25002_003E,
+    acs_home_value_cnt_total = B25075_001E,
+    acs_home_value_cnt_less_10k = B25075_002E,
+    acs_home_value_cnt_10k_15k = B25075_003E,
+    acs_home_value_cnt_15k_20k = B25075_004E,
+    acs_home_value_cnt_20k_25k = B25075_005E,
+    acs_home_value_cnt_25k_30k = B25075_006E,
+    acs_home_value_cnt_30k_35k = B25075_007E,
+    acs_home_value_cnt_35k_40k = B25075_008E,
+    acs_home_value_cnt_40k_50k = B25075_009E,
+    acs_home_value_cnt_50k_60k = B25075_010E,
+    acs_home_value_cnt_60k_70k = B25075_011E,
+    acs_home_value_cnt_70k_80k = B25075_012E,
+    acs_home_value_cnt_80k_90k = B25075_013E,
+    acs_home_value_cnt_90k_100k = B25075_014E,
+    acs_home_value_cnt_100k_125k = B25075_015E,
+    acs_home_value_cnt_125k_150k = B25075_016E,
+    acs_home_value_cnt_150k_175k = B25075_017E,
+    acs_home_value_cnt_175k_200k = B25075_018E,
+    acs_home_value_cnt_200k_250k = B25075_019E,
+    acs_home_value_cnt_250k_300k = B25075_020E,
+    acs_home_value_cnt_300k_400k = B25075_021E,
+    acs_home_value_cnt_400k_500k = B25075_022E,
+    acs_home_value_cnt_500k_750k = B25075_023E,
+    acs_home_value_cnt_750k_1000k = B25075_024E,
+    acs_home_value_cnt_1000k_1500k = B25075_025E,
+    acs_home_value_cnt_1500k_2000k = B25075_026E,
+    acs_home_value_cnt_2000k_more = B25075_027E
+  ) %>%
+  mutate_at(
+    vars(starts_with("acs_home_value_cnt")), function(x) round(x / .$acs_home_value_cnt_total, digits = 5)
+    ) %>%
+  mutate_at(
+    vars(starts_with("acs_str_yr")), function(x) round(x / .$acs_str_yr_total, digits = 5)
+  ) %>%
+  mutate(
+    acs_per_renters = round(acs_num_of_renters_total / acs_num_of_house_units, digits = 5),
+    acs_per_vacant = round(acs_occ_status_vacant / acs_occ_status_total, digits = 5)
+  ) %>%
+  select(
+    -acs_occ_status_total, 
+    -acs_home_value_cnt_total, 
+    -acs_str_yr_total
+    )
+
+acs_features <- properties_geo %>%
+  select(
+    id_parcel,
+    id_geo_bg_fips
+    ) %>%
+  left_join(acs_bg_data1, by = "id_geo_bg_fips") %>%
+  select(-id_geo_bg_fips)
+
+properties <- properties %>%
+  left_join(acs_features, by = "id_parcel")
+```
+
+#### Economic Indicators
+
+The value of a home is not only influenced by itself and its neighbors, but also larger economic trends. To help account for this in our model we are going to add in the following economic indicators
+
+- [30-Year Fixed Rate Mortgage Average in the United States](https://fred.stlouisfed.org/series/MORTGAGE30US)
+- [S&P/Case-Shiller CA-Los Angeles Home Price Index](https://fred.stlouisfed.org/series/LXXRSA)
+- [Unemployment Rate in Los Angeles County, CA](https://fred.stlouisfed.org/series/CALOSA7URN)
+
+```{r econ-features, eval=FALSE}
+library(alfred)
+
+# 30-Year Fixed Rate Mortgage Average in the United States (weekly)
+mort30 <- get_fred_series("MORTGAGE30US") %>% 
+  mutate(
+    date_month = floor_date(date, unit = "month"),
+    date_week = floor_date(date, unit = "week")
+    )
+
+# S&P/Case-Shiller CA-Los Angeles Home Price Index (monthly)
+spcs <- get_fred_series("LXXRNSA")
+
+# Unemployment Rate in Los Angeles County, CA (monthly)
+unemployment <- get_fred_series("CALOSA7URN")
+
+econ_features <- create_series(min(mort30$date) ~ max(mort30$date), 
+                               'daily', class = "Date") %>%
+  mutate(date_week = floor_date(date, unit = "week")) %>%
+  left_join(mort30, by = c("date_week" = "date_week")) %>%
+  left_join(spcs, by = c("date_month" = "date")) %>%
+  left_join(unemployment, by = c("date_month" = "date")) %>%
+  select(
+    date = date.x,
+    econ_mort_30 = MORTGAGE30US,
+    econ_case_shiller = LXXRNSA,
+    econ_unemployment = CALOSA7URN
+  ) %>%
+  filter(
+    date >= date("2015-12-01"),
+    date <= date("2018-01-01")
+    )
+
+write_feather(econ_features, "data/external-features/econ_features.feather")
+```
+
+Ok, so a check in on where we are. We currently have 5 data frames of interest, our old friends `properties` which now contains new features from our `bg_avg_features` neighborhood data and the `acs_features` which contain a few indicators from the American Community Survey and `trans` which contains our response variable `log_error` as well as the transaction date and a few date based features.
+
+The other 3 data frames we have are seperated from the `properties` and `trans` data currently because they contain features that have different values for each day and depending on what our transaction dates are for the partiuclar set of observations we will use filter those values down and join them at the time of training.
+
+## Handling Missing Data
+
+There are many ways to handle missing data from simple mean or median imputation to more complex methods such as knn or multiple imputation or even constructing other predictive models for predicting missing features. We will not explore that topic in depth here and use a somewhat simple approach that takes advantage of the spatial relationships of our data. 
+
+We will use median (or modal for nominal features) imputation but instead of doing global median values for all observations, we are going to break our observations into subspaces based on `zoning_landuse`, `area_lot`, and increasingly larger neigborhood windows. The reasoning behind this choice is that the values for many of the other features can vary widely across these categories. For example it wouldn't make sense to include the `tax_building` values for mobile homes if we are imputing the `tax_building` value of a commercial office building. The is true for `area_lot` the tax burden on a large commercial office will be larger then the one of a smaller office.
+
+So we will look at increaingly larger neighborhoods of `zoning_landuse` and (a discretized version of) `area_lot` combinations, if there are any none `NA` observations of that combination in the missing observations block group, fill its values with the block group median (mode), if there are no non-missing observations with that combination in that block group, then look at the tract level, if there are none at the tract look at the county level, and finally if there are no non-missing observations in the County that the parcel belongs to, an unlikely event, then use the "global" values to impute.
+
+To do this we first need to impute the values for `zoning_landuse` and `area_lot`. For this we will just use the increasing neighborhood search for `zoning_landuse` and then use the increasing neighborhood search broken down by `zoning_landuse` to fill in `area_lot`
+
+For some reason their are no built in functions for calculating the mode. Make a simple helper function to do so 
+```{r, eval=FALSE}
+
+# simple helper function to find the mode
+fct_mode <- function(f) {
+  
+  f_no_na <- na.omit(f)
+  fct_tab <- table(f_no_na)
+  
+  # if everything NA return NA
+  if (length(fct_tab) == 0) return(NA)
+  
+  modal_fct <- names(fct_tab)[which(fct_tab == max(fct_tab))]
+  modal_fct <- modal_fct[1] # in case of ties, go with first one
+  
+  modal_fct
+}
+```
+
+Some parcels have no information at all including geographic ids. Randomly assign them a `id_geo_bg_fips` value based block group frequency
+```{r, eval=FALSE}
+parcels_no_info <- properties %>% 
+  filter(
+    is.na(id_geo_bg_fips)
+    ) %>%
+  select(id_parcel)
+
+bg_probs <- table(properties$id_geo_bg_fips) %>% 
+  as.data.frame()
+
+bg_assignments <- sample(bg_probs$Var1, 
+                         size = nrow(parcels_no_info), 
+                         replace = TRUE, 
+                         prob = bg_probs$Freq)
+
+bg_assignments <- as.character(bg_assignments)
+
+parcels_no_info_row_id <- properties$id_parcel %in% parcels_no_info$id_parcel
+
+properties[parcels_no_info_row_id , "id_geo_bg_fips"] <- bg_assignments
+
+# fill in the missing tract and county based on bg
+properties <- properties %>%
+  group_by(id_geo_bg_fips) %>%
+  mutate(
+    id_geo_tract_fips = fct_mode(id_geo_tract_fips)
+    ) %>%
+  ungroup() %>%
+  group_by(id_geo_tract_fips) %>%
+  mutate(
+    id_geo_county_fips = fct_mode(id_geo_county_fips)
+  ) %>%
+  ungroup()
+```
+
+Now that all observations have at least geo id values we can impute `zoning_landuse` using the increasing neighborhood search
+```{r, eval=FALSE}
+properties <- properties %>%
+  group_by(id_geo_bg_fips) %>%
+  mutate(
+    zoning_landuse = replace_na(zoning_landuse, fct_mode(zoning_landuse))
+  ) %>%
+  ungroup() %>%
+  group_by(id_geo_tract_fips) %>%
+  mutate(
+    zoning_landuse = replace_na(zoning_landuse, fct_mode(zoning_landuse))
+  ) %>% 
+  ungroup() %>%
+  group_by(id_geo_county_fips) %>%
+  mutate(
+    zoning_landuse = replace_na(zoning_landuse, fct_mode(zoning_landuse))
+  ) %>%
+  ungroup()
+```
+
+Now for `area_lot` 
+```{r, eval=FALSE}
+properties <- properties %>%
+  group_by(
+    id_geo_bg_fips,
+    zoning_landuse
+    ) %>%
+  mutate(
+    area_lot = replace_na(area_lot, median(area_lot, na.rm = TRUE))
+  ) %>%
+  ungroup() %>%
+  group_by(
+    id_geo_tract_fips,
+    zoning_landuse    
+    ) %>%
+  mutate(
+    area_lot = replace_na(area_lot, median(area_lot, na.rm = TRUE))
+  ) %>% 
+  ungroup() %>%
+  group_by(
+    id_geo_county_fips,
+    zoning_landuse
+    ) %>%
+  mutate(
+    area_lot = replace_na(area_lot, median(area_lot, na.rm = TRUE))
+  ) %>%
+  ungroup()
+```
+
+OK, now for the rest of them. Becasue we used `median()` to fill in `area_lot` the `quantile()` are not unique, so add a little bit of noise `area_lot_jitter` and base the breaks on those.
+```{r, eval=FALSE}
+# impute all other features based on neighborhood, zoning_landuse, and area_lot
+properties <- properties %>%
+  mutate(
+    area_lot_jitter = area_lot + runif(n = n(), min = -1, max = 1),
+    area_lot_quantile = cut(area_lot_jitter, 
+                            breaks = quantile(area_lot_jitter, probs = seq(0, 1, 0.1), na.rm = TRUE))
+    ) %>%
+  group_by(
+    id_geo_bg_fips,
+    zoning_landuse,
+    area_lot_quantile
+  ) %>%
+  mutate_if(
+    is.numeric, .funs = function(x) replace_na(x, median(x, na.rm = TRUE))
+    ) %>%
+  mutate_if(
+    is.factor, .funs = function(x) replace_na(x, fct_mode(x))
+  ) %>%
+  ungroup() %>%
+  group_by(
+    id_geo_tract_fips,
+    zoning_landuse,
+    area_lot_quantile
+  ) %>%
+  mutate_if(
+    is.numeric, .funs = function(x) replace_na(x, median(x, na.rm = TRUE))
+  ) %>%
+  mutate_if(
+    is.factor, .funs = function(x) replace_na(x, fct_mode(x))
+  ) %>%
+  ungroup() %>%
+  group_by(
+    id_geo_county_fips,
+    zoning_landuse,
+    area_lot_quantile
+  ) %>%
+  mutate_if(
+    is.numeric, .funs = function(x) replace_na(x, median(x, na.rm = TRUE))
+  ) %>%
+  mutate_if(
+    is.factor, .funs = function(x) replace_na(x, fct_mode(x))
+  ) %>%
+  ungroup() %>%
+  group_by(
+    zoning_landuse,
+    area_lot_quantile
+  ) %>%
+  mutate_if(
+    is.numeric, .funs = function(x) replace_na(x, median(x, na.rm = TRUE))
+  ) %>%
+  mutate_if(
+    is.factor, .funs = function(x) replace_na(x, fct_mode(x))
+  ) %>%
+  ungroup()
+```
+
+At this point we now have all the original features we are going to use and have filled in all missing values. The next step is to transform our features, create interaction features, and then move unto feature selection. 
+
+
+## Feature Transformation
+
+Combine all of our data and remove a handful of features that we aren't going to use
+
+```{r, eval=FALSE}
+# have to remove id_geo after joins because of time features
+d <- trans %>% 
+  left_join(properties, by = "id_parcel") %>%
+  left_join(econ_features, by = "date") %>%
+  left_join(roll_bg, by = c("id_geo_bg_fips", "date")) %>%
+  left_join(roll_tract, by = c("id_geo_tract_fips", "date")) %>%
+  select(
+    -id_parcel,
+    -abs_log_error,
+    -week,
+    -region_city,
+    -region_zip,
+    -area_lot_jitter,
+    -area_lot_quantile,
+    -lat, # we have other lat/lon features
+    -lon, 
+    -starts_with("id_geo")
+  ) %>%
+  mutate(
+    date = as.numeric(date),
+    year = factor(year, levels = sort(unique(year)), ordered = TRUE),
+    month_year = factor(
+      as.character(month_year), 
+      levels = as.character(unique(sort(month_year))), 
+      ordered = TRUE),
+    str_quality = factor(str_quality, levels = 12:1, ordered = TRUE)
+  )
+```
+
+Here we are going to use the fantastic package `recipes` to handle all of our feature transformations
+
+```{r, eval=FALSE}
+library(recipes)
+
+rec <- recipe(d) %>%
+  add_role(log_error, new_role = 'outcome') %>%
+  add_role(-log_error, new_role = 'predictor') %>%
+  step_meanimpute(starts_with("roll_")) %>%
+  step_zv(all_numeric()) %>%
+  step_BoxCox(
+    starts_with("num_"), 
+    starts_with("area_"),
+    starts_with("tax_"),
+    starts_with("bg_avg_num_"), 
+    starts_with("bg_avg_area_"),
+    starts_with("bg_avg_tax_")
+  ) %>%
+  step_dummy(all_nominal(), one_hot = TRUE) %>%
+  step_interact(~starts_with("tax_"):starts_with("area_")) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_pca(starts_with("acs_home_value_cnt"), prefix = "acs_home_value_cnt_PC") %>%
+  step_zv(all_numeric())
+  
+rec_prepped <- prep(rec, training = d)
+```
+
+
+
+<!--chapter:end:04-feature-engineering.Rmd-->
+
+# Feature Selection
+
+Now that we have our data in something
+Based on the data frame we created in `d` and the transformation recipe we made we are going to do some initital analysis on which features we want to keep or drop. the `xgboost` package provides a function, `xgb.importance()` that gives a summary of how important each feature was in a model estimated by `xgb.train()`
+
+To have a little more robustness in our selection, we will use v fold cross validation to get mutliple samples from `d` and investigate the importance of the features across all samples.
+
+```{r feat-select-func, eval=FALSE}
+library(broom)
+library(purrr)
+library(xgboost)
+
+importance_results <- function(splits) {
+  
+  x <- bake(rec_prepped, newdata = analysis(splits))
+  y <- x$log_error
+  
+  d <- model.matrix(log_error ~., data = x)
+  d <- xgb.DMatrix(d, label = y)
+
+  mdl <- xgb.train(data = d, label = y, nrounds = 1000, nthread = 4)
+  print(summary(mdl))
+
+  mdl_importance <- as.data.frame(xgb.importance(model = mdl))
+  
+  mdl_importance
+}
+```
+
+
+```{r feat-select-run, eval=FALSE}
+library(rsample)
+
+resamples <- vfold_cv(d, v = 10, repeats = 5)
+
+resamples$results <- map(resamples$splits, 
+                         importance_results)
+
+
+importance_df <- bind_rows(resamples$results)
+
+feature_avg <- importance_df %>% 
+  group_by(Feature) %>% 
+  summarise(
+    mean = mean(Gain), 
+    sd = sd(Gain), 
+    n = n()
+    )
+```
+
+```{r feat-select-read-in-saved, echo=FALSE}
+importance_df <- read_feather("data/importance_vars.feather")
+
+feature_avg <- importance_df %>% 
+  group_by(Feature) %>% 
+  summarise(
+    mean = mean(Gain), 
+    sd = sd(Gain), 
+    n = n()
+    )
+```
+
+
+```{r feat-importance, fig.cap="Mean Feature Importance Based on Cross Validation Using Basic XGBoost Model", fig.height=12, out.width="100%"}
+feature_avg %>%
+  ggplot(aes(x = forcats::fct_reorder(Feature, mean), y = mean)) +
+  geom_hline(aes(yintercept = 0.001), colour = "red", size = 1, alpha = 0.5) +
+  geom_point(size = 1) +
+  geom_errorbar(aes(ymin = mean - sd * 2, ymax = mean + sd * 2)) +
+  coord_flip() +
+  theme_bw() +
+  theme(
+    axis.text=element_text(size = 6)
+    ) +
+  labs(
+    x = "Feature",
+    y = "Mean Gain"
+  )
+```
+
+To reduce the complexity and computation time our of modeling, we are going to remove the feature that consistantly did not provide much value by cutting off the number of features we'll use at a mean gain at `0.001` (red line). 
+
+```{r feat-to-use, eval=FALSE}
+features_to_use <- feature_avg %>% 
+  filter(mean >= 0.001) %>%
+  .$Feature
+```
+
+
+<!--chapter:end:05-feature-selection.Rmd-->
+
+# Modeling
+
+For our first pass a submission, we are going to use the XGBoost model. This model has seen much success in Kaggle competition due to its flexiblity and range of modeling tasks it can be applied to.
+
+### XGBoost
+
+In gerenal XGBoost works like this...
+
+```{r mod-data-setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(feather)
+library(tidyverse)
+
+# read in data ------------------------------------------------------------
+
+properties <- read_feather("data/properties_17_joined_filled.feather")
+trans <- read_feather("data/transactions.feather")
+
+roll_bg <- read_feather("data/external-features/roll_features_blockgroup.feather")
+roll_tract <- read_feather("data/external-features/roll_features_tract.feather")
+econ_features <- read_feather("data/external-features/econ_features.feather")
+
+# prep data ---------------------------------------------------------------
+
+# have to remove id_geo after joins because of time features
+d <- trans %>% 
+  left_join(properties, by = "id_parcel") %>%
+  left_join(econ_features, by = "date") %>%
+  left_join(roll_bg, by = c("id_geo_bg_fips", "date")) %>%
+  left_join(roll_tract, by = c("id_geo_tract_fips", "date")) %>%
+  select(
+    -id_parcel,
+    -abs_log_error,
+    -week,
+    -region_city,
+    -region_zip,
+    -area_lot_jitter,
+    -area_lot_quantile,
+    -lat, # we have other lat/lon features
+    -lon, 
+    -starts_with("id_geo")
+  ) %>%
+  mutate(
+    date = as.numeric(date),
+    year = factor(year, levels = sort(unique(year)), ordered = TRUE),
+    month_year = factor(
+      as.character(month_year), 
+      levels = as.character(unique(sort(month_year))), 
+      ordered = TRUE),
+    str_quality = factor(str_quality, levels = 12:1, ordered = TRUE)
+  )
+
+
+# read in importance vars
+importance_df <- read_feather("data/importance_vars.feather")
+
+feature_avg <- importance_df %>% 
+  group_by(Feature) %>% 
+  summarise(
+    mean = mean(Gain), 
+    sd = sd(Gain), 
+    n = n()
+  )
+
+features_to_use <- feature_avg %>% 
+  filter(mean >= 0.001) %>%
+  .$Feature
+```
+
+```{r mod-make-recipe, echo=FALSE}
+library(recipes)
+
+rec <- recipe(d) %>%
+  add_role(log_error, new_role = 'outcome') %>%
+  add_role(-log_error, new_role = 'predictor') %>%
+  step_meanimpute(starts_with("roll_")) %>%
+  step_zv(all_numeric()) %>%
+  step_BoxCox(
+    starts_with("num_"), 
+    starts_with("area_"),
+    starts_with("tax_"),
+    starts_with("bg_avg_num_"), 
+    starts_with("bg_avg_area_"),
+    starts_with("bg_avg_tax_")
+  ) %>%
+  step_dummy(all_nominal(), one_hot = TRUE) %>%
+  step_interact(~starts_with("tax_"):starts_with("area_")) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_pca(starts_with("acs_home_value_cnt"), prefix = "acs_home_value_cnt_PC") %>%
+  step_zv(all_numeric())
+```
+
+
+As a reminder our recipe for our transformations are stored in `rec`
+```{r}
+rec
+```
+
+and the data we have is in `d`
+```{r}
+# some kind of d summary
+```
+
+
+### creating our scoring function
+
+```{r mod-score-func, eval=FALSE}
+# create scoring function -------------------------------------------------
+
+xgboost_regress_score <- function(train_df, target_var, params, eval_df, ...) {
+    
+    X_train <- train_df %>% 
+      select(features_to_use) %>%
+      as.matrix()
+    
+    y_train <- train_df[[target_var]]
+    xgb_train_data <- xgb.DMatrix(X_train, label = y_train)
+    
+    X_eval <- eval_df %>% 
+      select(features_to_use) %>% 
+      as.matrix()
+    
+    y_eval <- eval_df[[target_var]]
+    
+    xgb_eval_data <- xgb.DMatrix(X_eval, label = y_eval)
+    
+    model <- xgb.train(params = params,
+                       data = xgb_train_data,
+                       watchlist = list(train = xgb_train_data, eval = xgb_eval_data),
+                       objective = 'reg:linear',
+                       verbose = FALSE,
+                       nthread = 20,
+                       ...)
+    
+    preds <- predict(model, xgb_eval_data)
+    
+    list(mae = MAE(preds, y_eval))
+    
+  }
+```
+
+Make the parameter set that we are going to search over
+
+```{r mod-paramset}
+library(ParamHelpers)
+
+# make parameter set ------------------------------------------------------
+
+xgboost_random_params <-
+  makeParamSet(
+    makeIntegerParam('max_depth', lower = 1, upper = 15),
+    makeNumericParam('eta', lower = 0.01, upper = 0.1),
+    makeNumericParam('gamma', lower = 0, upper = 5),
+    makeIntegerParam('min_child_weight', lower = 1, upper = 100),
+    makeNumericParam('subsample', lower = 0.25, upper = 0.9),
+    makeNumericParam('colsample_bytree', lower = 0.25, upper = 0.9)
+  )
+```
+
+set up our cv 
+```{r mod-cv-resample, eval=FALSE}
+# create cv resampling ----------------------------------------------------
+resamples <- vfold_cv(d, v = 5) 
+```
+
+Use Ranger model for a progressive zoom into parameter space for tuning
+
+```{r mod-param-search, eval=FALSE}
+library(MLmetrics)
+library(xgboost)
+library(tidytune)
+# perform surrogate search over parameters --------------------------------
+
+n <- c(10, 5, 3, 2)
+n_candidates <- c(0, 10, 100, 1000)
+
+search_results <- 
+  surrogate_search(
+    resamples = resamples,
+    recipe = rec,
+    param_set = xgboost_random_params,
+    n = n,
+    scoring_func = xgboost_regress_score,
+    nrounds = 1000,
+    early_stopping_rounds = 20,
+    eval_metric = 'mae',
+    input = NULL,
+    surrogate_target = 'mae',
+    n_candidates = n_candidates,
+    top_n = 5
+  )
+```
+
+```{r mod-read-in-search, echo=FALSE}
+search_results <- read_feather("data/tuning results.feather")
+```
+
+```{r}
+search_summary <- 
+  search_results %>%
+  group_by_at(getParamIds(xgboost_random_params)) %>%
+  summarise(mae = mean(mae)) %>%
+  arrange(mae)
+```
+
+```{r, echo=FALSE}
+search_summary %>%
+  DT::datatable(
+    extensions = 'FixedColumns',
+    options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+    )
+    )
+```
+
+
+
+```{r fig-mae-by-run, fig.cap="Mean Absolute Error Progressively Decreasing with Each Surrogate Run", message=FALSE}
+search_results %>%
+  group_by_at(
+    c("surrogate_run", 
+      "surrogate_iteration",
+      "param_id",
+       getParamIds(xgboost_random_params)
+      )
+    ) %>%
+  summarise(mae = mean(mae)) %>%
+  ungroup() %>%
+  mutate(surrogate_run = factor(surrogate_run)) %>%
+  arrange(
+    surrogate_run,
+    surrogate_iteration
+  ) %>%
+  mutate(
+    iteration = row_number()
+  ) %>%
+ggplot(aes(x = iteration, y = mae)) +
+    geom_smooth(alpha = 0.2, size = 0.8, colour = "grey") +
+  geom_point(aes(col = surrogate_run)) + 
+  theme_bw() + 
+  labs(
+    y = "MAE",
+    x = "iteration",
+    col = "Surrogate Run"
+  )
+```
+
+## Make Predictions with Tuned Parameters
+
+```{r tuned-params}
+
+tuned_params <- search_summary %>%
+  ungroup() %>%
+  filter(mae == min(mae)) %>%
+  select(getParamIds(xgboost_random_params)) %>%
+  as.list()
+
+tuned_params
+```
+
+Train the model using the tuned parameters
+```{r train-tuned-mod, eval=FALSE}
+d_prepped <- prep(rec)
+
+train_df <- bake(d_prepped, newdata = d)
+
+x_train <- train_df %>% 
+  select(features_to_use) %>%
+  as.matrix()
+
+y_train <- train_df$log_error
+
+xgb_train_data <- xgb.DMatrix(x_train, label = y_train)
+
+model <- xgb.train(params = tuned_params,
+                   data = xgb_train_data,
+                   objective = 'reg:linear',
+                   verbose = FALSE,
+                   nthread = 4,
+                   nrounds = 1000)
+```
+
+Now we need to make our predictions. We'll make a helper function `predict_date()` to do this. 
+
+```{r pred-func, eval=FALSE}
+predict_date <- function(parcel_id, predict_date, mdl) {
+
+d_predict_ids <- properties %>%
+  filter(id_parcel %in% parcel_id) %>%
+  crossing(date = predict_date)
+
+d_predict <- d_predict_ids %>%
+  mutate(
+    year = year(date),
+    month_year = make_date(year(date), month(date)),
+    month = month(date, label = TRUE),
+    week = floor_date(date, unit = "week"),
+    week_of_year = week(date),
+    week_since_start = (min(date) %--% date %/% dweeks()) + 1,
+    wday = wday(date, label = TRUE),
+    day_of_month = day(date)
+  ) %>% 
+  left_join(econ_features, by = "date") %>%
+  left_join(roll_bg, by = c("id_geo_bg_fips", "date")) %>%
+  left_join(roll_tract, by = c("id_geo_tract_fips", "date")) %>%
+  select(
+    -id_parcel,
+    -week,
+    -region_city,
+    -region_zip,
+    -area_lot_jitter,
+    -area_lot_quantile,
+    -lat, # we have other lat/lon features
+    -lon, 
+    -starts_with("id_geo")
+  ) %>%
+  mutate(
+    date = as.numeric(date),
+    year = factor(year, levels = sort(unique(year)), ordered = TRUE),
+    month_year = factor(
+      as.character(month_year), 
+      levels = as.character(unique(sort(month_year))), 
+      ordered = TRUE),
+    str_quality = factor(str_quality, levels = 12:1, ordered = TRUE)
+  )
+
+eval_df <- bake(d_prepped, newdata = d_predict)
+
+x_eval <- eval_df %>% 
+  select(features_to_use) %>% 
+  as.matrix()
+
+preds <- predict(mdl, x_eval)
+
+properties_predict <- d_predict_ids %>%
+  select(
+    id_parcel,
+    date
+  ) %>%
+  mutate(
+    pred = preds
+    ) %>%
+  spread(date, pred)
+
+names(properties_predict) <- c("ParcelId", "201610","201611","201612", "201710","201711","201712")
+
+properties_predict
+
+}
+```
+
+The submission requires a prediction for Oct-Dec 2016 and Oct-Dec 2017. This means that the prediction is for any day in that month. For our example first submission, we are going to just set the date to the first wednesday in each month. This is completely arbitrary. Another approach would be to make predictions for every day in each month and submit the mean prediction for each month. We'll save this for later work.
+
+```{r make-prediction, eval=FALSE}
+# first wednesday in each month
+predict_dates <- date(c("2016-10-06","2016-11-02","2016-12-07", "2017-10-04","2017-11-01","2017-12-06"))
+
+# split parcels to chunck our predictions
+id_parcels <- properties$id_parcel
+id_parcel_splits <- split(id_parcels, ceiling(seq_along(id_parcels) / 5000))
+
+
+predict_list <- lapply(id_parcel_splits, function(i) {
+  
+  pred_df <- predict_date(
+    parcel_id = i, 
+    predict_date = predict_dates, 
+    mdl = model
+    )
+  })
+
+# they only evaluate to 4 decimcals so round to save space
+# Convert ParcelId to integer to prevent Sci Notation that causes
+# issues with submission
+predict_df <- bind_rows(predict_list) %>%
+  mutate_at(vars(`201610`:`201712`), round, digits = 4) %>%
+  mutate(ParcelId = as.integer(ParcelId)) %>%
+  as.data.frame()
+
+write_csv(predict_df, "data/submit01.csv")
+```
+
+This model produced a MAE of `0.0651839` on the public leaderboard, which is honestly not that great, but it is a starting point that we can now start iterarting from. My first thought is perhaps we are overfitting on our training data, we could start exploring how differnt tuning affect actual submissions and not just cross validation based on resampling. Based on this we can tract how our performance changes and start narrow down what what tuning are most performant for this task.
+
+Another approach would be to only use 
+
+
+<!--chapter:end:06-modeling.Rmd-->
+
+# Summary
+
+## Key Findings
+
+## Weak Points of Analysis
+
+imputation method
+need to test more models
+could include more geo related features like interstate density
+
+should do a base line comparision 
+
+<!--chapter:end:07-summary.Rmd-->
+

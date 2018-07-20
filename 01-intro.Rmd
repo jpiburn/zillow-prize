@@ -1,26 +1,41 @@
 # Introduction {#intro}
 
-## Purpose
+This project is meant to serve as an example workflow for making predictive models. The sections of the book are roughly broken into the major steps that are a part of the modeling process.
+
+As with many things in life, their is rarely a one-size-fits-all, always correct, way of doing something and making a predictive model is no different. In light of that, I want to stress that the workflow and methods used in this book are meant to be illustrative not authoritative.
+
+The only always correct answer in predictive modeling is, "It depends." 
+
 
 ## Problem
 
-Location, Location, Location
-You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods).
+The problem we will workthrough in this book is the [Zillow Prize](https://www.kaggle.com/c/zillow-prize-1) compeitition on that took place on Kaggle. Although it is now closed, it provides a good problemset for us to work through.
 
-Figures and tables with captions will be placed in `figure` and `table` environments, respectively.
+From the site
+>>>In this million-dollar competition, participants will develop an algorithm that makes predictions about the future sale prices of homes. The contest is structured into two rounds, the qualifying round which opens May 24, 2017 and the private round for the 100 top qualifying teams that opens on Feb 1st, 2018. In the qualifying round, you’ll be building a model to improve the Zestimate residual error. In the final round, you’ll build a home valuation algorithm from the ground up, using external data sources to help engineer new features that give your model an edge over the competition.
 
-```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'}
-par(mar = c(4, 4, .1, .1))
-plot(pressure, type = 'b', pch = 19)
-```
+## Evaluation
 
-Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab).
+The submission were evaluated based on the Mean Absolute Error between the predicted `logerror` and the actual `logerror`
 
-```{r nice-tab, tidy=FALSE}
-knitr::kable(
-  head(iris, 20), caption = 'Here is a nice table!',
-  booktabs = TRUE
-)
-```
+The `logerror` is defined as
 
-You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015].
+$$logerror = log(Zestimate) - log(SalePrice)$$
+
+while Mean Absolute Error is defined as
+
+$$MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n} $$
+
+## Initital Thoughts
+
+> "Location, Location, Location."
+>
+> --- Some Real Estate Guy
+
+The above quote is of course the number one rule of real estate. Though out this modeling process, let's try to keep this idea in mind when we are exploring, creating new features, and modeling the data.
+
+An additional interesting thing about this problem is that it can be thought about as creating a model to predict where Zillow's model is bad. We aren't trying to predict home prices, we are predicting where Zillow had a bad estimate of home prices, so the residuals of their Zestimate model.Based on this idea, let's create some new features
+
+
+## Note on Using External Features
+In the original competition, you were only allowed to use the features transformations of those included in the data they provided. Since our goal is to provide an illustrative workflow for making a predictive model in general and not actually competing in the competition, we are not going to adhere to that rule and use a few external sources of information.

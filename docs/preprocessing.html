@@ -33,7 +33,7 @@
   
   
 <link rel="prev" href="intro.html">
-<link rel="next" href="exploratory-analysis.html">
+<link rel="next" href="eda.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -63,6 +63,8 @@
 <link href="libs/dt-core-1.10.12/css/jquery.dataTables.min.css" rel="stylesheet" />
 <link href="libs/dt-core-1.10.12/css/jquery.dataTables.extra.css" rel="stylesheet" />
 <script src="libs/dt-core-1.10.12/js/jquery.dataTables.min.js"></script>
+<link href="libs/dt-ext-fixedcolumns-1.10.12/css/fixedColumns.dataTables.min.css" rel="stylesheet" />
+<script src="libs/dt-ext-fixedcolumns-1.10.12/js/dataTables.fixedColumns.min.js"></script>
 <script src="libs/plotly-binding-4.7.1/plotly.js"></script>
 <script src="libs/typedarray-0.1/typedarray.min.js"></script>
 <link href="libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
@@ -127,8 +129,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="divider"></li>
 <li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Welcome</a></li>
 <li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
-<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#purpose"><i class="fa fa-check"></i><b>1.1</b> Purpose</a></li>
-<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#problem"><i class="fa fa-check"></i><b>1.2</b> Problem</a></li>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#problem"><i class="fa fa-check"></i><b>1.1</b> Problem</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#evaluation"><i class="fa fa-check"></i><b>1.2</b> Evaluation</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#initital-thoughts"><i class="fa fa-check"></i><b>1.3</b> Initital Thoughts</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#note-on-using-external-features"><i class="fa fa-check"></i><b>1.4</b> Note on Using External Features</a></li>
 </ul></li>
 <li class="chapter" data-level="2" data-path="preprocessing.html"><a href="preprocessing.html"><i class="fa fa-check"></i><b>2</b> PreProcessing</a><ul>
 <li class="chapter" data-level="2.1" data-path="preprocessing.html"><a href="preprocessing.html#the-raw-data"><i class="fa fa-check"></i><b>2.1</b> The Raw Data</a><ul>
@@ -141,45 +145,37 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="2.3" data-path="preprocessing.html"><a href="preprocessing.html#extracting-geographic-information"><i class="fa fa-check"></i><b>2.3</b> Extracting Geographic Information</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html"><i class="fa fa-check"></i><b>3</b> Exploratory Analysis</a><ul>
-<li class="chapter" data-level="3.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#response-variable"><i class="fa fa-check"></i><b>3.1</b> Response Variable</a><ul>
-<li class="chapter" data-level="3.1.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#transactions-over-time"><i class="fa fa-check"></i><b>3.1.1</b> Transactions Over Time</a></li>
-<li class="chapter" data-level="3.1.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#map"><i class="fa fa-check"></i><b>3.1.2</b> Map</a></li>
+<li class="chapter" data-level="3" data-path="eda.html"><a href="eda.html"><i class="fa fa-check"></i><b>3</b> Exploratory Analysis</a><ul>
+<li class="chapter" data-level="3.1" data-path="eda.html"><a href="eda.html#response-variable"><i class="fa fa-check"></i><b>3.1</b> Response Variable</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="eda.html"><a href="eda.html#transactions-over-time"><i class="fa fa-check"></i><b>3.1.1</b> Transactions Over Time</a></li>
+<li class="chapter" data-level="3.1.2" data-path="eda.html"><a href="eda.html#spatial-distribution-of-log_error"><i class="fa fa-check"></i><b>3.1.2</b> Spatial Distribution of <code>log_error</code></a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#predictor-variables"><i class="fa fa-check"></i><b>3.2</b> Predictor Variables</a><ul>
-<li class="chapter" data-level="3.2.1" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#missingness"><i class="fa fa-check"></i><b>3.2.1</b> Missingness</a></li>
-<li class="chapter" data-level="3.2.2" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#numeric-features"><i class="fa fa-check"></i><b>3.2.2</b> Numeric Features</a></li>
-<li class="chapter" data-level="3.2.3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#numeric-outliers"><i class="fa fa-check"></i><b>3.2.3</b> Numeric Outliers</a></li>
-<li class="chapter" data-level="3.2.4" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#categorical-features"><i class="fa fa-check"></i><b>3.2.4</b> Categorical Features</a></li>
+<li class="chapter" data-level="3.2" data-path="eda.html"><a href="eda.html#predictor-variables"><i class="fa fa-check"></i><b>3.2</b> Predictor Variables</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="eda.html"><a href="eda.html#missingness"><i class="fa fa-check"></i><b>3.2.1</b> Missingness</a></li>
+<li class="chapter" data-level="3.2.2" data-path="eda.html"><a href="eda.html#numeric-features"><i class="fa fa-check"></i><b>3.2.2</b> Numeric Features</a></li>
+<li class="chapter" data-level="3.2.3" data-path="eda.html"><a href="eda.html#numeric-outliers"><i class="fa fa-check"></i><b>3.2.3</b> Numeric Outliers</a></li>
+<li class="chapter" data-level="3.2.4" data-path="eda.html"><a href="eda.html#categorical-features"><i class="fa fa-check"></i><b>3.2.4</b> Categorical Features</a></li>
 </ul></li>
-<li class="chapter" data-level="3.3" data-path="exploratory-analysis.html"><a href="exploratory-analysis.html#exploring-log_error-a-little-more"><i class="fa fa-check"></i><b>3.3</b> Exploring <code>log_error</code> A little More</a></li>
+<li class="chapter" data-level="3.3" data-path="eda.html"><a href="eda.html#exploring-log_error-a-little-more"><i class="fa fa-check"></i><b>3.3</b> Exploring <code>log_error</code> A little More</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="feature-engineering.html"><a href="feature-engineering.html"><i class="fa fa-check"></i><b>4</b> Feature Engineering</a><ul>
-<li class="chapter" data-level="4.1" data-path="feature-engineering.html"><a href="feature-engineering.html#creating-new-features"><i class="fa fa-check"></i><b>4.1</b> Creating New Features</a><ul>
-<li class="chapter" data-level="4.1.1" data-path="feature-engineering.html"><a href="feature-engineering.html#internal-features"><i class="fa fa-check"></i><b>4.1.1</b> Internal Features</a></li>
-<li class="chapter" data-level="4.1.2" data-path="feature-engineering.html"><a href="feature-engineering.html#external-features"><i class="fa fa-check"></i><b>4.1.2</b> External Features</a></li>
+<li class="chapter" data-level="4" data-path="feat-eng.html"><a href="feat-eng.html"><i class="fa fa-check"></i><b>4</b> Feature Engineering</a><ul>
+<li class="chapter" data-level="4.1" data-path="feat-eng.html"><a href="feat-eng.html#creating-new-features"><i class="fa fa-check"></i><b>4.1</b> Creating New Features</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="feat-eng.html"><a href="feat-eng.html#internal-features"><i class="fa fa-check"></i><b>4.1.1</b> Internal Features</a></li>
+<li class="chapter" data-level="4.1.2" data-path="feat-eng.html"><a href="feat-eng.html#external-features"><i class="fa fa-check"></i><b>4.1.2</b> External Features</a></li>
 </ul></li>
-<li class="chapter" data-level="4.2" data-path="feature-engineering.html"><a href="feature-engineering.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
-<li class="chapter" data-level="4.3" data-path="feature-engineering.html"><a href="feature-engineering.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
+<li class="chapter" data-level="4.2" data-path="feat-eng.html"><a href="feat-eng.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
+<li class="chapter" data-level="4.3" data-path="feat-eng.html"><a href="feat-eng.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
-<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#creating-a-baseline"><i class="fa fa-check"></i><b>6.1</b> Creating A Baseline</a></li>
-<li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#more-complex-models"><i class="fa fa-check"></i><b>6.2</b> More Complex Models</a><ul>
-<li class="chapter" data-level="6.2.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.2.1</b> XGBoost</a></li>
-</ul></li>
-<li class="chapter" data-level="6.3" data-path="modeling.html"><a href="modeling.html#v-vold-resampling"><i class="fa fa-check"></i><b>6.3</b> V-Vold Resampling</a></li>
-<li class="chapter" data-level="6.4" data-path="modeling.html"><a href="modeling.html#parameter-tuning"><i class="fa fa-check"></i><b>6.4</b> Parameter Tuning</a><ul>
-<li class="chapter" data-level="6.4.1" data-path="modeling.html"><a href="modeling.html#xgboost-parameters"><i class="fa fa-check"></i><b>6.4.1</b> XGBoost Parameters</a></li>
-<li class="chapter" data-level="6.4.2" data-path="modeling.html"><a href="modeling.html#search-techinques"><i class="fa fa-check"></i><b>6.4.2</b> Search Techinques</a></li>
-</ul></li>
-<li class="chapter" data-level="6.5" data-path="modeling.html"><a href="modeling.html#comparing-models"><i class="fa fa-check"></i><b>6.5</b> Comparing Models</a></li>
+<li class="chapter" data-level="6.0.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.0.1</b> XGBoost</a></li>
+<li class="chapter" data-level="6.0.2" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.0.2</b> creating our scoring function</a></li>
+<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#make-predictions-with-tuned-parameters"><i class="fa fa-check"></i><b>6.1</b> Make Predictions with Tuned Parameters</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="summary.html"><a href="summary.html"><i class="fa fa-check"></i><b>7</b> Summary</a><ul>
 <li class="chapter" data-level="7.1" data-path="summary.html"><a href="summary.html#key-findings"><i class="fa fa-check"></i><b>7.1</b> Key Findings</a></li>
 <li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#weak-points-of-analysis"><i class="fa fa-check"></i><b>7.2</b> Weak Points of Analysis</a></li>
 </ul></li>
-<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
 
@@ -202,6 +198,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="preprocessing" class="section level1">
 <h1><span class="header-section-number">Chapter 2</span> PreProcessing</h1>
+<p>The first step for any data driven project is getting to know the data. In this section we will look at the raw data that was provided by the competition and then do a little pre processing that will make the data easier to work with for the rest of the project</p>
 <div id="the-raw-data" class="section level2">
 <h2><span class="header-section-number">2.1</span> The Raw Data</h2>
 <p>The raw data from zillow contains the following data (desrciptions from the the data page)</p>
@@ -211,10 +208,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><p><strong>train_2016.csv</strong> - the training set with transactions from 1/1/2016 to 12/31/2016</p></li>
 <li><p><strong>train_2017.csv</strong> - the training set with transactions from 1/1/2017 to 9/15/2017 (released on 10/2/2017)</p></li>
 <li><p><strong>sample_submission.csv</strong> - a sample submission file in the correct format</p></li>
+<li><p><strong>zillow_data_dictionary.xlsx</strong> - Field Definitions and coded value meanings</p></li>
 </ul>
 <div id="saving-raw-data-using-feather" class="section level3">
 <h3><span class="header-section-number">2.1.1</span> Saving Raw Data Using <code>feather</code></h3>
-<p>The <code>feather</code> package provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a <code>.feather</code> file format to make all other read faster</p>
+<p>The R binding for the <a href="https://github.com/wesm/feather">feather</a> data store provides the ability for very fast read and write of data. For speed purposes we will save all raw data into a <code>.feather</code> file format to make all other read faster</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(feather)
 <span class="kw">library</span>(readr)
 
@@ -233,11 +231,10 @@ train_<span class="dv">17</span> &lt;-<span class="st"> </span><span class="kw">
 </div>
 <div id="renaming-variables" class="section level2">
 <h2><span class="header-section-number">2.2</span> Renaming Variables</h2>
-<p>Many of the feature names are not very consistant. Let’s rename them to something easier to work with</p>
+<p>Many of the feature names are not very consistant. To take advatange of helpful functions from the <code>tidyverse</code> set of packages, such as <code>starts_with()</code> and <code>one_of()</code> Let’s rename them to something more consistant and easier to work with.</p>
 <div id="renaming-properties-features" class="section level3">
 <h3><span class="header-section-number">2.2.1</span> Renaming <code>properties</code> Features</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)
-<span class="kw">library</span>(feather)
 
 prop_<span class="dv">16</span> &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<span class="st">&quot;data-raw/feather/properties_2016.feather&quot;</span>)
 prop_<span class="dv">17</span> &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<span class="st">&quot;data-raw/feather/properties_2017.feather&quot;</span>)
@@ -301,10 +298,7 @@ prop_<span class="dv">16</span> &lt;-<span class="st"> </span>prop_<span class="
 </div>
 <div id="renaming-train-features" class="section level3">
 <h3><span class="header-section-number">2.2.2</span> renaming <code>train</code> features</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)
-<span class="kw">library</span>(feather)
-
-trans_<span class="dv">16</span> &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<span class="st">&quot;data-raw/feather/train_2016_v2.feather&quot;</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">trans_<span class="dv">16</span> &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<span class="st">&quot;data-raw/feather/train_2016_v2.feather&quot;</span>)
 trans_<span class="dv">17</span> &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<span class="st">&quot;data-raw/feather/train_2017.feather&quot;</span>)
 
 trans_<span class="dv">16</span> &lt;-<span class="st"> </span>trans_<span class="dv">16</span> <span class="op">%&gt;%</span><span class="st"> </span>
@@ -319,6 +313,7 @@ trans_<span class="dv">16</span> &lt;-<span class="st"> </span>trans_<span class
 </div>
 <div id="basic-transformations" class="section level3">
 <h3><span class="header-section-number">2.2.3</span> Basic Transformations</h3>
+<p>Based on the definitions in the <code>zillow_data_dictionary.xlsx</code> we can recode some of the features to have be more interpretable while we are exploring.</p>
 <div id="properties" class="section level4">
 <h4><span class="header-section-number">2.2.3.1</span> Properties</h4>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(forcats)
@@ -401,6 +396,8 @@ prop_<span class="dv">17</span> &lt;-<span class="st"> </span>prop_<span class="
 </div>
 <div id="transactions" class="section level4">
 <h4><span class="header-section-number">2.2.3.2</span> Transactions</h4>
+<p>The transactions tables are where our response variable <code>log_error</code> (name changed from orginal <code>logerror</code>) and the dates of the transactions are recorded.</p>
+<p>To make them easier to work with, let’s combine all the transactions into one table and create a few basic transformations of the <code>date</code> (name changed from original <code>transactiondate</code>)</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lubridate)
 
 <span class="co"># combine transactions into one data frame</span>
@@ -417,6 +414,7 @@ trans &lt;-<span class="st"> </span>trans_<span class="dv">16</span> <span class
     <span class="dt">wday =</span> <span class="kw">wday</span>(date, <span class="dt">label =</span> <span class="ot">TRUE</span>),
     <span class="dt">day_of_month =</span> <span class="kw">day</span>(date)
   )</code></pre></div>
+<p>Save our output</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">write_feather</span>(prop_<span class="dv">16</span>, <span class="st">&quot;data/properties_16.feather&quot;</span>)
 <span class="kw">write_feather</span>(prop_<span class="dv">17</span>, <span class="st">&quot;data/properties_17.feather&quot;</span>)
 <span class="kw">write_feather</span>(trans, <span class="st">&quot;data/transactions.feather&quot;</span>)</code></pre></div>
@@ -425,13 +423,10 @@ trans &lt;-<span class="st"> </span>trans_<span class="dv">16</span> <span class
 </div>
 <div id="extracting-geographic-information" class="section level2">
 <h2><span class="header-section-number">2.3</span> Extracting Geographic Information</h2>
-<p>The raw data contains information on block group ids. We can clean this up and use it to bring in external data like Census infomation.</p>
+<p>As noted in the <a href="intro.html#intro">1</a> we are going to break from the rules of the competition and use external information to (hopefully) help improve our predictions. Since the data we are using relate to locations of individual properties and we have each of their geographic coordinates, <code>latitude</code> and <code>longitude</code> let’s use those to get the U.S. Census Geographies they are apart of that we can make use of when adding external information.</p>
+<p>The original data contain the fields <code>rawcensustractandblock</code> and <code>censustractandblock</code> but after trying to parse those into a usable format and failing, I figured it was just easier to use the <code>latitude</code> and <code>longitude</code> fields and then join that to the Census information.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(sf)
-<span class="kw">library</span>(feather)
-<span class="kw">library</span>(forcats)
-<span class="kw">library</span>(tidyverse)
 <span class="kw">library</span>(tidycensus)
-
 
 <span class="co"># NAD83 / California zone 5 (ftUS)</span>
 <span class="co"># https://epsg.io/2229</span>
@@ -455,7 +450,6 @@ properties &lt;-<span class="st"> </span><span class="kw">read_feather</span>(<s
     <span class="dt">remove =</span> <span class="ot">FALSE</span> <span class="co"># keep lat/long fields</span>
     ) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">st_transform</span>(crs_id)
-
 
 census_bgs &lt;-<span class="st"> </span><span class="kw">get_acs</span>(
   <span class="dt">geography =</span> <span class="st">&quot;block group&quot;</span>, 
@@ -509,9 +503,9 @@ properties_geo &lt;-<span class="st"> </span>properties_geo <span class="op">%&g
         <span class="st">&quot;Orange&quot;</span>      =<span class="st"> &quot;059&quot;</span>,
         <span class="st">&quot;Ventura&quot;</span>     =<span class="st"> &quot;111&quot;</span>
       )
-  )
-
-<span class="co"># remove geometry b/c feather can&#39;t store lists</span>
+  )</code></pre></div>
+<p>Now save our geographic features</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># remove geometry b/c feather can&#39;t store lists</span>
 <span class="co"># add back in when needed from lat lon</span>
 properties_geo<span class="op">$</span>geometry &lt;-<span class="st"> </span><span class="ot">NULL</span>
 
@@ -525,7 +519,7 @@ properties_geo<span class="op">$</span>geometry &lt;-<span class="st"> </span><s
         </div>
       </div>
 <a href="intro.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="exploratory-analysis.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="eda.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

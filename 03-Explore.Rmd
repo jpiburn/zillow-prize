@@ -1,18 +1,26 @@
-# Exploratory Analysis
+# Exploratory Analysis {#eda}
+
+After \@ref(PreProcessing) the next step is doing exploratory data analysis (EDA). I can't stess enough how critical this step is. It is tempting to want to jump right into making models and then start improving and tweaking them from there, but this can quickly take you down a rabbit hole, waste your time, and generally make you sad.
+
+The time you spend doing EDA will pay dividends later.
+
+Below we are first going to look at only our response variable `log_error` after that we will look at the predictor features in `properties`. Once we get a good handle on both of those, we'll look at how our response variable `log_error` varies across the predictors in `properties`
+
+Throughout this section we will progressively pare down features in our `properties` data due to common things such as, missingness and redundancy, to only the features that we are going to continue with into the next stages.
+
 
 ```{r, warning=FALSE, message=FALSE}
-library(feather)
 library(skimr)
 library(tidyverse)
+library(feather)
 library(DataExplorer)
 
 trans <- read_feather("data/transactions.feather")
-
 ```
 
 
 ## Response Variable
-`log_error` something something text
+`log_error` something something text come back to when the processing is finished
 ```{r skim-trans, warning=FALSE, out.width="100%", cache=TRUE}
 skim(trans) %>%
   skimr::pander()
@@ -88,6 +96,7 @@ trans %>%
 
 ### Transactions Over Time
 
+
 ```{r trans-per-week, fig.cap="Number of Transactions per Week. The dip in the middle coorisponds to the hold out testing data", message=FALSE ,cache=TRUE}
 trans %>% 
   group_by(week_since_start) %>% 
@@ -110,7 +119,7 @@ trans %>%
   theme_bw()
 ```
 
-### Map
+### Spatial Distribution of `log_error`
 ```{r, map-log-error, fig.cap="Distribution of Log Errors", message=FALSE, warning=FALSE, out.width="100%", cache=TRUE}
 library(leaflet)
 library(leaflet.extras)
@@ -130,7 +139,7 @@ leaflet() %>%
 
 ## Predictor Variables
 
-Now lets take a look at the properties dataset
+Now lets take a look at the `properties` dataset. Based on the descriptions from Kaggle, it seem's like the `properties_17.csv` has updated information and is a replacement from that of `properties_16.csv`. For our purposes we are only going to use `properties_17.csv`, however given more space, it would be interesting to look into the differences in these files to see if there were any patterns that could be useful.   
 
 ```{r read-prop}
 properties <- read_feather("data/properties_17.feather")
@@ -142,6 +151,9 @@ skim(properties) %>%
 ```
 
 ### Missingness
+
+Missing values in data is a cold cruel reality. It is one of the most contraining factors there is when it comes to predictive power. Having a good understanding of the prevalence of missing values and any patterns to them is needed to make the most out of what data you do have.
+
 ```{r miss-plot, fig.asp=1.2, fig.cap="Completeness by Feature. Many are extremely sparse"}
 missing_data <- plot_missing(properties, theme = theme_bw())
 
@@ -198,6 +210,7 @@ plot_histogram(ggtheme = theme_bw(),  fill = "red", alpha = 0.5)
 
 
 Looking at the histograms a few things become obvious. There are huge outliers in many of the features and there are some features that are currently encoded as numeric but should not be treated as such. For example, `str_quality` is an ordinal scale 1 (best qaulity) to 12 (worst) but if we leave them as numeric they will be treated as ratio. `str_heating` is nominal so the order doesn't have meaning. Other that need to be changed are `region_city`, `region_zip`
+
 Once we do this, we'll look again at the relationships between our numeric features.
 
 ```{r turn-num-to-nom}
@@ -292,7 +305,14 @@ properties %>%
     starts_with("tax_")
     ) %>% 
   arrange(tax_rank) %>%
-  DT::datatable()
+  DT::datatable(
+    extensions = 'FixedColumns',
+    options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+    )
+    )
 ```
 
 While the values are extremely large, they appear to look legitimate. We won't remove these, but it does indicate that we should perhaps apply some transformations to our tax features before we start applying our model.
@@ -322,7 +342,6 @@ The distribution across categories are extremely non-uniform, especially `str_he
 Let's look at what the distribution of `log_error` looks like across these categories.
 ```{r le-by-str-qaul, fig.cap="Distribution of Log Error Across Structure Quality Feature", message=FALSE, warning=FALSE}
 library(ggridges)
-library(forcats)
 
 properties %>%
   select(
@@ -347,6 +366,7 @@ properties %>%
     y = "str_quality"
   )
 ```
+
 ```{r le-by-str-heating, fig.cap="Distribution of Log Error Across Heating Type Feature", message=FALSE, warning=FALSE}
 library(ggridges)
 
@@ -430,7 +450,6 @@ trans_prop <- read_feather("data/properties_geo_only.feather") %>%
   right_join(trans, by = "id_parcel") %>%
   left_join(properties, by = "id_parcel")
 ```
-
 
 ```{r le-bg-box, fig.cap="Outliers and Variability of Mean Absolute Error Dreceases When Neighborhood Sales Increase", fig.asp=0.7}
 trans_prop %>%
@@ -540,7 +559,9 @@ ggplot(aes(lon, lat)) +
 
 ```
 
-At first glance there looks to be a strong spatial and temporal correlation to `log_error`. Let's look more into the spatial correlation
+At first glance there looks to be a strong spatial and temporal correlation to `log_error`. Let's look more into the spatial correlation.
+
+Moran's I and its variant Local Moran's I, provide a useful measure of the amount of spatial autocorrelation in a variable.
 
 ```{r morans-i-outliers, fig.cap="Spatial Autocorrelation of Log Error Outliers", message=FALSE, warning=FALSE, cache.rebuild=TRUE}
 library(spatstat)

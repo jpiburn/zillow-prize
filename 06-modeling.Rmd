@@ -1,21 +1,388 @@
 # Modeling
 
-## Creating A Baseline
-
-## More Complex Models
+For our first pass a submission, we are going to use the XGBoost model. This model has seen much success in Kaggle competition due to its flexiblity and range of modeling tasks it can be applied to.
 
 ### XGBoost
 
-## V-Vold Resampling
+In gerenal XGBoost works like this...
 
-## Parameter Tuning
+```{r mod-data-setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(feather)
+library(tidyverse)
 
-### XGBoost Parameters
+# read in data ------------------------------------------------------------
 
-### Search Techinques
+properties <- read_feather("data/properties_17_joined_filled.feather")
+trans <- read_feather("data/transactions.feather")
 
-#### Surrogate Search
+roll_bg <- read_feather("data/external-features/roll_features_blockgroup.feather")
+roll_tract <- read_feather("data/external-features/roll_features_tract.feather")
+econ_features <- read_feather("data/external-features/econ_features.feather")
 
-## Comparing Models
+# prep data ---------------------------------------------------------------
 
+# have to remove id_geo after joins because of time features
+d <- trans %>% 
+  left_join(properties, by = "id_parcel") %>%
+  left_join(econ_features, by = "date") %>%
+  left_join(roll_bg, by = c("id_geo_bg_fips", "date")) %>%
+  left_join(roll_tract, by = c("id_geo_tract_fips", "date")) %>%
+  select(
+    -id_parcel,
+    -abs_log_error,
+    -week,
+    -region_city,
+    -region_zip,
+    -area_lot_jitter,
+    -area_lot_quantile,
+    -lat, # we have other lat/lon features
+    -lon, 
+    -starts_with("id_geo")
+  ) %>%
+  mutate(
+    date = as.numeric(date),
+    year = factor(year, levels = sort(unique(year)), ordered = TRUE),
+    month_year = factor(
+      as.character(month_year), 
+      levels = as.character(unique(sort(month_year))), 
+      ordered = TRUE),
+    str_quality = factor(str_quality, levels = 12:1, ordered = TRUE)
+  )
+
+
+# read in importance vars
+importance_df <- read_feather("data/importance_vars.feather")
+
+feature_avg <- importance_df %>% 
+  group_by(Feature) %>% 
+  summarise(
+    mean = mean(Gain), 
+    sd = sd(Gain), 
+    n = n()
+  )
+
+features_to_use <- feature_avg %>% 
+  filter(mean >= 0.001) %>%
+  .$Feature
+```
+
+```{r mod-make-recipe, echo=FALSE}
+library(recipes)
+
+rec <- recipe(d) %>%
+  add_role(log_error, new_role = 'outcome') %>%
+  add_role(-log_error, new_role = 'predictor') %>%
+  step_meanimpute(starts_with("roll_")) %>%
+  step_zv(all_numeric()) %>%
+  step_BoxCox(
+    starts_with("num_"), 
+    starts_with("area_"),
+    starts_with("tax_"),
+    starts_with("bg_avg_num_"), 
+    starts_with("bg_avg_area_"),
+    starts_with("bg_avg_tax_")
+  ) %>%
+  step_dummy(all_nominal(), one_hot = TRUE) %>%
+  step_interact(~starts_with("tax_"):starts_with("area_")) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_pca(starts_with("acs_home_value_cnt"), prefix = "acs_home_value_cnt_PC") %>%
+  step_zv(all_numeric())
+```
+
+
+As a reminder our recipe for our transformations are stored in `rec`
+```{r}
+rec
+```
+
+and the data we have is in `d`
+```{r}
+# some kind of d summary
+```
+
+
+### creating our scoring function
+
+```{r mod-score-func, eval=FALSE}
+# create scoring function -------------------------------------------------
+
+xgboost_regress_score <- function(train_df, target_var, params, eval_df, ...) {
+    
+    X_train <- train_df %>% 
+      select(features_to_use) %>%
+      as.matrix()
+    
+    y_train <- train_df[[target_var]]
+    xgb_train_data <- xgb.DMatrix(X_train, label = y_train)
+    
+    X_eval <- eval_df %>% 
+      select(features_to_use) %>% 
+      as.matrix()
+    
+    y_eval <- eval_df[[target_var]]
+    
+    xgb_eval_data <- xgb.DMatrix(X_eval, label = y_eval)
+    
+    model <- xgb.train(params = params,
+                       data = xgb_train_data,
+                       watchlist = list(train = xgb_train_data, eval = xgb_eval_data),
+                       objective = 'reg:linear',
+                       verbose = FALSE,
+                       nthread = 20,
+                       ...)
+    
+    preds <- predict(model, xgb_eval_data)
+    
+    list(mae = MAE(preds, y_eval))
+    
+  }
+```
+
+Make the parameter set that we are going to search over
+
+```{r mod-paramset}
+library(ParamHelpers)
+
+# make parameter set ------------------------------------------------------
+
+xgboost_random_params <-
+  makeParamSet(
+    makeIntegerParam('max_depth', lower = 1, upper = 15),
+    makeNumericParam('eta', lower = 0.01, upper = 0.1),
+    makeNumericParam('gamma', lower = 0, upper = 5),
+    makeIntegerParam('min_child_weight', lower = 1, upper = 100),
+    makeNumericParam('subsample', lower = 0.25, upper = 0.9),
+    makeNumericParam('colsample_bytree', lower = 0.25, upper = 0.9)
+  )
+```
+
+set up our cv 
+```{r mod-cv-resample, eval=FALSE}
+# create cv resampling ----------------------------------------------------
+resamples <- vfold_cv(d, v = 5) 
+```
+
+Use Ranger model for a progressive zoom into parameter space for tuning
+
+```{r mod-param-search, eval=FALSE}
+library(MLmetrics)
+library(xgboost)
+library(tidytune)
+# perform surrogate search over parameters --------------------------------
+
+n <- c(10, 5, 3, 2)
+n_candidates <- c(0, 10, 100, 1000)
+
+search_results <- 
+  surrogate_search(
+    resamples = resamples,
+    recipe = rec,
+    param_set = xgboost_random_params,
+    n = n,
+    scoring_func = xgboost_regress_score,
+    nrounds = 1000,
+    early_stopping_rounds = 20,
+    eval_metric = 'mae',
+    input = NULL,
+    surrogate_target = 'mae',
+    n_candidates = n_candidates,
+    top_n = 5
+  )
+```
+
+```{r mod-read-in-search, echo=FALSE}
+search_results <- read_feather("data/tuning results.feather")
+```
+
+```{r}
+search_summary <- 
+  search_results %>%
+  group_by_at(getParamIds(xgboost_random_params)) %>%
+  summarise(mae = mean(mae)) %>%
+  arrange(mae)
+```
+
+```{r, echo=FALSE}
+search_summary %>%
+  DT::datatable(
+    extensions = 'FixedColumns',
+    options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+    )
+    )
+```
+
+
+
+```{r fig-mae-by-run, fig.cap="Mean Absolute Error Progressively Decreasing with Each Surrogate Run", message=FALSE}
+search_results %>%
+  group_by_at(
+    c("surrogate_run", 
+      "surrogate_iteration",
+      "param_id",
+       getParamIds(xgboost_random_params)
+      )
+    ) %>%
+  summarise(mae = mean(mae)) %>%
+  ungroup() %>%
+  mutate(surrogate_run = factor(surrogate_run)) %>%
+  arrange(
+    surrogate_run,
+    surrogate_iteration
+  ) %>%
+  mutate(
+    iteration = row_number()
+  ) %>%
+ggplot(aes(x = iteration, y = mae)) +
+    geom_smooth(alpha = 0.2, size = 0.8, colour = "grey") +
+  geom_point(aes(col = surrogate_run)) + 
+  theme_bw() + 
+  labs(
+    y = "MAE",
+    x = "iteration",
+    col = "Surrogate Run"
+  )
+```
+
+## Make Predictions with Tuned Parameters
+
+```{r tuned-params}
+
+tuned_params <- search_summary %>%
+  ungroup() %>%
+  filter(mae == min(mae)) %>%
+  select(getParamIds(xgboost_random_params)) %>%
+  as.list()
+
+tuned_params
+```
+
+Train the model using the tuned parameters
+```{r train-tuned-mod, eval=FALSE}
+d_prepped <- prep(rec)
+
+train_df <- bake(d_prepped, newdata = d)
+
+x_train <- train_df %>% 
+  select(features_to_use) %>%
+  as.matrix()
+
+y_train <- train_df$log_error
+
+xgb_train_data <- xgb.DMatrix(x_train, label = y_train)
+
+model <- xgb.train(params = tuned_params,
+                   data = xgb_train_data,
+                   objective = 'reg:linear',
+                   verbose = FALSE,
+                   nthread = 4,
+                   nrounds = 1000)
+```
+
+Now we need to make our predictions. We'll make a helper function `predict_date()` to do this. 
+
+```{r pred-func, eval=FALSE}
+predict_date <- function(parcel_id, predict_date, mdl) {
+
+d_predict_ids <- properties %>%
+  filter(id_parcel %in% parcel_id) %>%
+  crossing(date = predict_date)
+
+d_predict <- d_predict_ids %>%
+  mutate(
+    year = year(date),
+    month_year = make_date(year(date), month(date)),
+    month = month(date, label = TRUE),
+    week = floor_date(date, unit = "week"),
+    week_of_year = week(date),
+    week_since_start = (min(date) %--% date %/% dweeks()) + 1,
+    wday = wday(date, label = TRUE),
+    day_of_month = day(date)
+  ) %>% 
+  left_join(econ_features, by = "date") %>%
+  left_join(roll_bg, by = c("id_geo_bg_fips", "date")) %>%
+  left_join(roll_tract, by = c("id_geo_tract_fips", "date")) %>%
+  select(
+    -id_parcel,
+    -week,
+    -region_city,
+    -region_zip,
+    -area_lot_jitter,
+    -area_lot_quantile,
+    -lat, # we have other lat/lon features
+    -lon, 
+    -starts_with("id_geo")
+  ) %>%
+  mutate(
+    date = as.numeric(date),
+    year = factor(year, levels = sort(unique(year)), ordered = TRUE),
+    month_year = factor(
+      as.character(month_year), 
+      levels = as.character(unique(sort(month_year))), 
+      ordered = TRUE),
+    str_quality = factor(str_quality, levels = 12:1, ordered = TRUE)
+  )
+
+eval_df <- bake(d_prepped, newdata = d_predict)
+
+x_eval <- eval_df %>% 
+  select(features_to_use) %>% 
+  as.matrix()
+
+preds <- predict(mdl, x_eval)
+
+properties_predict <- d_predict_ids %>%
+  select(
+    id_parcel,
+    date
+  ) %>%
+  mutate(
+    pred = preds
+    ) %>%
+  spread(date, pred)
+
+names(properties_predict) <- c("ParcelId", "201610","201611","201612", "201710","201711","201712")
+
+properties_predict
+
+}
+```
+
+The submission requires a prediction for Oct-Dec 2016 and Oct-Dec 2017. This means that the prediction is for any day in that month. For our example first submission, we are going to just set the date to the first wednesday in each month. This is completely arbitrary. Another approach would be to make predictions for every day in each month and submit the mean prediction for each month. We'll save this for later work.
+
+```{r make-prediction, eval=FALSE}
+# first wednesday in each month
+predict_dates <- date(c("2016-10-06","2016-11-02","2016-12-07", "2017-10-04","2017-11-01","2017-12-06"))
+
+# split parcels to chunck our predictions
+id_parcels <- properties$id_parcel
+id_parcel_splits <- split(id_parcels, ceiling(seq_along(id_parcels) / 5000))
+
+
+predict_list <- lapply(id_parcel_splits, function(i) {
+  
+  pred_df <- predict_date(
+    parcel_id = i, 
+    predict_date = predict_dates, 
+    mdl = model
+    )
+  })
+
+# they only evaluate to 4 decimcals so round to save space
+# Convert ParcelId to integer to prevent Sci Notation that causes
+# issues with submission
+predict_df <- bind_rows(predict_list) %>%
+  mutate_at(vars(`201610`:`201712`), round, digits = 4) %>%
+  mutate(ParcelId = as.integer(ParcelId)) %>%
+  as.data.frame()
+
+write_csv(predict_df, "data/submit01.csv")
+```
+
+This model produced a MAE of `0.0651839` on the public leaderboard, which is honestly not that great, but it is a starting point that we can now start iterarting from. My first thought is perhaps we are overfitting on our training data, we could start exploring how differnt tuning affect actual submissions and not just cross validation based on resampling. Based on this we can tract how our performance changes and start narrow down what what tuning are most performant for this task.
+
+Another approach would be to only use 
 

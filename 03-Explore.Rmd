@@ -526,7 +526,7 @@ ggmap(error_map) +
 ```
 
 Now lets look at the spatiotemporal distribution of `log_error` outliers
-```{r le-out-month, fig.cap="SpatioTemporal Distribution of Log Error Outliers", out.width="100%", fig.height=15}
+```{r le-out-month, fig.cap="SpatioTemporal Distribution of Log Error Outliers", out.width="100%", fig.height=15, cache=TRUE}
 
 trans_prop %>%
   filter(

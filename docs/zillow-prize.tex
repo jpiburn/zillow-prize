@@ -24,7 +24,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
 \hypersetup{unicode=true,
-            pdftitle={Zillow Prize Modeling},
+            pdftitle={An Example Predictive Modeling Workflow Using The Zillow Prize Dataset},
             pdfauthor={Jesse Piburn},
             pdfborder={0 0 0},
             breaklinks=true}
@@ -116,7 +116,7 @@
 }
 
 \setlength{\droptitle}{-2em}
-  \title{Zillow Prize Modeling}
+  \title{An Example Predictive Modeling Workflow Using The Zillow Prize Dataset}
   \pretitle{\vspace{\droptitle}\centering\huge}
   \posttitle{\par}
   \author{Jesse Piburn}
@@ -124,7 +124,7 @@
   \postauthor{\par}
   \predate{\centering\large\emph}
   \postdate{\par}
-  \date{2018-07-20}
+  \date{2018-07-21}
 
 \usepackage{booktabs}
 
@@ -152,26 +152,19 @@
 \chapter*{Welcome}\label{welcome}
 \addcontentsline{toc}{chapter}{Welcome}
 
-This is a \emph{sample} book written in \textbf{Markdown}. You can use
-anything that Pandoc's Markdown supports, e.g., a math equation
-\(a^2 + b^2 = c^2\).
+\begin{figure}
+\centering
+\includegraphics{zillowprize-png.png}
+\caption{Zillow Prize}
+\end{figure}
 
-The \textbf{bookdown} package can be installed from CRAN or Github:
+This book is meant to be an illustrative guide for approaching a
+predictive modeling task. We'll step through the different parts of the
+modeling workflow and work through the Zillow Prize Kaggle Competition
+dataset and prediction tasks.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{install.packages}\NormalTok{(}\StringTok{"bookdown"}\NormalTok{)}
-\CommentTok{# or the development version}
-\CommentTok{# devtools::install_github("rstudio/bookdown")}
-\end{Highlighting}
-\end{Shaded}
-
-Remember each Rmd file contains one and only one chapter, and a chapter
-is defined by the first-level heading \texttt{\#}.
-
-To compile this example to PDF, you need XeLaTeX. You are recommended to
-install TinyTeX (which includes XeLaTeX):
-\url{https://yihui.name/tinytex/}.
+The Github source for this document can be found
+\href{https://github.com/jpiburn/zillow-prize}{here}
 
 \chapter{Introduction}\label{intro}
 
@@ -195,16 +188,15 @@ The problem we will workthrough in this book is the
 compeitition on that took place on Kaggle. Although it is now closed, it
 provides a good problemset for us to work through.
 
-From the site \textgreater{}\textgreater{}\textgreater{}In this
-million-dollar competition, participants will develop an algorithm that
-makes predictions about the future sale prices of homes. The contest is
-structured into two rounds, the qualifying round which opens May 24,
-2017 and the private round for the 100 top qualifying teams that opens
-on Feb 1st, 2018. In the qualifying round, you'll be building a model to
-improve the Zestimate residual error. In the final round, you'll build a
-home valuation algorithm from the ground up, using external data sources
-to help engineer new features that give your model an edge over the
-competition.
+From the site \textgreater{} In this million-dollar competition,
+participants will develop an algorithm that makes predictions about the
+future sale prices of homes. The contest is structured into two rounds,
+the qualifying round which opens May 24, 2017 and the private round for
+the 100 top qualifying teams that opens on Feb 1st, 2018. In the
+qualifying round, you'll be building a model to improve the Zestimate
+residual error. In the final round, you'll build a home valuation
+algorithm from the ground up, using external data sources to help
+engineer new features that give your model an edge over the competition.
 
 \section{Evaluation}\label{evaluation}
 
@@ -213,11 +205,17 @@ the predicted \texttt{logerror} and the actual \texttt{logerror}
 
 The \texttt{logerror} is defined as
 
-\[logerror = log(Zestimate) - log(SalePrice)\]
+\begin{equation}
+logerror = log(Zestimate) - log(SalePrice)
+\label{eq:logerror}
+\end{equation}
 
 while Mean Absolute Error is defined as
 
-\[MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n} \]
+\begin{equation}
+MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n}
+\label{eq:mae}
+\end{equation}
 
 \section{Initital Thoughts}\label{initital-thoughts}
 
@@ -227,7 +225,7 @@ while Mean Absolute Error is defined as
 --- Some Real Estate Guy
 \end{quote}
 
-The above quote is of course the number one rule of real estate. Though
+The above quote is of course the number one rule of real estate. Through
 out this modeling process, let's try to keep this idea in mind when we
 are exploring, creating new features, and modeling the data.
 
@@ -651,11 +649,11 @@ Now save our geographic features
 
 \chapter{Exploratory Analysis}\label{eda}
 
-After \ref{PreProcessing} the next step is doing exploratory data
-analysis (EDA). I can't stess enough how critical this step is. It is
-tempting to want to jump right into making models and then start
-improving and tweaking them from there, but this can quickly take you
-down a rabbit hole, waste your time, and generally make you sad.
+After Preprocessing the next step is doing exploratory data analysis
+(EDA). I can't stess enough how critical this step is. It is tempting to
+want to jump right into making models and then start improving and
+tweaking them from there, but this can quickly take you down a rabbit
+hole, waste your time, and generally make you sad.
 
 The time you spend doing EDA will pay dividends later.
 
@@ -684,7 +682,8 @@ the next stages.
 \section{Response Variable}\label{response-variable}
 
 \texttt{log\_error} something something text come back to when the
-processing is finished
+processing is finished. Apologies ahead of time for the poor formating
+of the table. I'll work to fix that.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1299,7 +1298,7 @@ Looks to have a higher baseline}
 \centering
 \includegraphics{zillow-prize_files/figure-latex/trans-per-week-1.pdf}
 \caption{\label{fig:trans-per-week}Number of Transactions per Week. The dip
-in the middle coorisponds to the hold out testing data}
+in the middle corresponds to the hold out testing data}
 \end{figure}
 
 \begin{Shaded}
@@ -1341,7 +1340,7 @@ Week.}
 \end{Shaded}
 
 \begin{figure}
-\includegraphics[width=1\linewidth]{zillow-prize_files/figure-latex/map-log-error-1} \caption{Distribution of Log Errors}\label{fig:map-log-error}
+\includegraphics[width=1\linewidth]{zillow-prize_files/figure-latex/map-log-error-1} \caption{Spatial Distribution of Log Errors}\label{fig:map-log-error}
 \end{figure}
 
 \section{Predictor Variables}\label{predictor-variables}
@@ -1359,6 +1358,9 @@ were any patterns that could be useful.
 \NormalTok{properties <-}\StringTok{ }\KeywordTok{read_feather}\NormalTok{(}\StringTok{"data/properties_17.feather"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
+
+Again apologies for the table formatting. Useful information none the
+less.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2899,11 +2901,12 @@ sparse}
 \end{verbatim}
 
 There seem to be quite a lot of missing features. For now lets remove
-the ones that are over 50\% and continue on with those. We could come
-back to the ones we dropped and try to recover some of those missing
-values with more sophisticated methods, for example we could impute the
-missing values based on their spatial neighbors but for now we will
-continue with the ones that have over 50\% of their values.
+the ones that are over 50\% missing and continue on with those that are
+more than 50\% complete. We could come back to the ones we dropped and
+try to recover some of those missing values with more sophisticated
+methods, for example we could impute the missing values based on their
+spatial neighbors but for now we will continue with the ones that have
+over 50\% of their values.
 
 A few of the features, \texttt{rawcensustractandblock}, \texttt{fips},
 and \texttt{censustractandblock}, and \texttt{region\_county} are ID
@@ -3155,7 +3158,7 @@ something jumps out
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-6-1.pdf}
+\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-4-1.pdf}
 
 While the values are extremely large, they appear to look legitimate. We
 won't remove these, but it does indicate that we should perhaps apply
@@ -3449,8 +3452,8 @@ information populated for \texttt{str\_qaulity}
 
 \begin{figure}
 \centering
-\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-7-1.pdf}
-\caption{\label{fig:unnamed-chunk-7}Spatial Distribution of Log Error
+\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-5-1.pdf}
+\caption{\label{fig:unnamed-chunk-5}Spatial Distribution of Log Error
 Outliers}
 \end{figure}
 
@@ -3587,9 +3590,10 @@ interaction variables, apply transformations such as centering and
 scaling, choice how we want to encode our categorical features, and also
 bring in new external information.
 
-Just as in \ref{eda}, throughout this section we will progressively
-updating our \texttt{properties} data to include new and transformed
-features that we are going to continue with into the next stages.
+Just as in Chapter \ref{eda}, throughout this section we will
+progressively updating our \texttt{properties} data to include new and
+transformed features that we are going to continue with into the next
+stages.
 
 \section{Creating New Features}\label{creating-new-features}
 
@@ -3597,11 +3601,7 @@ features that we are going to continue with into the next stages.
 ``Everything is related to everything else, but near things are more
 related than distant things.''
 
-\begin{itemize}
-\tightlist
-\item
-  Waldo Tobler
-\end{itemize}
+--- Waldo Tobler
 \end{quote}
 
 This ``First Law of Geography'' is something we can take advantage of
@@ -3809,24 +3809,7 @@ each feature, given more time investigating the information contained in
 these fields is most likely worth your while.
 
 There are literally thousands you can explore in the ACS. For our
-example, we are going to stop a little short of that and only add the
-following
-
-\begin{itemize}
-\tightlist
-\item
-  Fill this in
-
-  \begin{itemize}
-  \tightlist
-  \item
-    sub group 1
-  \item
-    sub group 2
-  \end{itemize}
-\item
-  fill this in
-\end{itemize}
+example, we are going to use a few
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4274,8 +4257,29 @@ going to use
 \end{Highlighting}
 \end{Shaded}
 
-Here we are going to use the fantastic package \texttt{recipes} to
-handle all of our feature transformations
+Here we are going to use the \texttt{recipes} package to handle all of
+our feature transformations. The main transformations we are going to
+apply are as follows
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Apply a Box-Cox transformation on the features that were highly skewed
+\item
+  Creating dummy variables using one hot encoding for non ordered
+  factors and polynomial spline for ordered factors
+\item
+  Create interaction features from all of the \texttt{tax\_*} and
+  \texttt{area\_*} features
+\item
+  Center and Scale all the predictors
+\item
+  Transform the several \texttt{acs\_home\_value\_cnt\_*} features using
+  PCA. Keep only 5
+\item
+  Remove any Features that have zero variance
+\end{enumerate}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4307,16 +4311,24 @@ handle all of our feature transformations
 
 \chapter{Feature Selection}\label{feature-selection}
 
-Now that we have our data in something Based on the data frame we
-created in \texttt{d} and the transformation recipe we made we are going
-to do some initital analysis on which features we want to keep or drop.
-the \texttt{xgboost} package provides a function,
-\texttt{xgb.importance()} that gives a summary of how important each
-feature was in a model estimated by \texttt{xgb.train()}
+Now that we created a boat load of features, how do we decide which ones
+we want to use? As typical, there are many ways of performing feature
+selection. Here we will perform just one.
 
-To have a little more robustness in our selection, we will use v fold
-cross validation to get mutliple samples from \texttt{d} and investigate
-the importance of the features across all samples.
+Based on the data frame we created in \texttt{d} and the transformation
+recipe we made we are going to do some initital analysis on which
+features we want to keep or drop. The \texttt{xgboost} package provides
+a function, \texttt{xgb.importance()} that gives a summary of how
+important each feature was in a model estimated by \texttt{xgb.train()}.
+We will use this to help guide our selection of features to carry
+forward. However, we want to make sure that we don't mistakenly remove a
+feature that is actually important, so instead of running the
+\texttt{xgb.importance()} function just once on all of our traning data,
+we will use v fold cross validation to create mutliple sub samples and
+run the \texttt{xgb.importance()} function for each one.
+
+\section{Generate Importance Helper
+Function}\label{generate-importance-helper-function}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4342,6 +4354,11 @@ the importance of the features across all samples.
 \end{Highlighting}
 \end{Shaded}
 
+\section{V-Fold Cross Validation
+Resampling}\label{v-fold-cross-validation-resampling}
+
+Create the resampling, run the models and summarize the results
+
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(rsample)}
@@ -4363,6 +4380,8 @@ the importance of the features across all samples.
 \NormalTok{    )}
 \end{Highlighting}
 \end{Shaded}
+
+\section{Inspect Importance Results}\label{inspect-importance-results}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4403,15 +4422,37 @@ by cutting off the number of features we'll use at a mean gain at
 \chapter{Modeling}\label{modeling}
 
 For our first pass a submission, we are going to use the XGBoost model.
-This model has seen much success in Kaggle competition due to its
-flexiblity and range of modeling tasks it can be applied to.
+This model has seen much success in Kaggle competitions and wide use
+across industry and academia due to its flexiblity, speed, and range of
+modeling tasks it can be applied to. We'll start by creating a base line
+model and then try our hand at tuning a few of the XGBoost parameters to
+see how of performance changes.
 
-\subsection{XGBoost}\label{xgboost}
+\section{XGBoost}\label{xgboost}
 
-In gerenal XGBoost works like this\ldots{}
+XGBoost, which stands for eXtreme Gradient Boosting, is a highly
+optimized and flexible implementation of gradient boosted decision
+trees. At a high level boosted trees work by creating ensembles of
+decision trees and uses gradient boosting (additive training) to combine
+each of the tree's predictions into one strong prediction by optimizing
+over any differentiable loss function. In practice a regularization
+penalty is added to the loss function to help control complexity.
+
+Decision trees, particularly XGBoost is widely used for several reasons
+such as its flexibilty to be used for numerous problem types across both
+regression and classification, it's invariance to scaling inputs, and
+it's ability to scale to handle large amounts of data.
+
+For more information about XGBoost see Chen \& Guestrin\footnote{XGBoost:
+  A Scalable Tree Boosting System \url{https://arxiv.org/abs/1603.02754}}
+and Gradient Boosting in general, Fridmean (1999)\footnote{Greedy
+  Function Approximation: A Gradient Boosting Machine
+  \url{http://statweb.stanford.edu/~jhf/ftp/trebst.pdf}}
+
+\section{Our Recipe for Success}\label{our-recipe-for-success}
 
 As a reminder our recipe for our transformations are stored in
-\texttt{rec}
+\texttt{rec} that we created in Chapter 4. It's looks like this
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4441,230 +4482,84 @@ As a reminder our recipe for our transformations are stored in
 ## Zero variance filter on all_numeric()
 \end{verbatim}
 
-and the data we have is in \texttt{d}
+\section{Base Line Model}\label{base-line-model}
+
+\begin{quote}
+Alice: ``Would you tell me, please, which way I ought to go from here?''
+
+The Cheshire Cat: ``That depends a good deal on where you want to get
+to.''
+
+Alice: ``I don't much care where.''
+
+The Cheshire Cat: ``Then it doesn't matter which way you go.''
+
+--- The Adventures of Alice in Wonderland, on the need for base line
+models in machine learning (that's my interpretation at least)
+\end{quote}
+
+Making Predictive models is an iterative process, a process in which it
+is easy to get pulled in wrong directions by needless complexity,
+fruitless tweaks, and soul crushingly poor performing ideas you thought
+might actually work.
+
+To help tether ourselves to reality, it is useful to generate a base
+line model to compare all other models against before we get into any of
+the more complex tasks like parameter tuning. This will help guide what
+direction we should take next so we don't end up like Alice.
+
+Kaggle competitions have done wonders for our collective obession for
+improving predictive accuracy with wild disregard for the time and
+effort it took to achieve that improvement. In a typical business or
+scientific academic application, improvement in predictive accuracy has
+to be balanced with the cost of acheiving it. A base line model can help
+use measure these diminishing returns.
+
+For our base line model, we will use the top \texttt{20} features
+returned from our feature selection process in an xgboost model with
+default parameter settings and with \texttt{nrounds}, the maximum number
+of boosting iterations, set to \texttt{1000}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{# some kind of d summary}
-\end{Highlighting}
-\end{Shaded}
+\NormalTok{features_to_use_baseline <-}\StringTok{ }\NormalTok{feature_avg }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{arrange}\NormalTok{(}\KeywordTok{desc}\NormalTok{(mean)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{head}\NormalTok{(}\DecValTok{20}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\NormalTok{.}\OperatorTok{$}\NormalTok{Feature}
 
-\subsection{creating our scoring
-function}\label{creating-our-scoring-function}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# create scoring function -------------------------------------------------}
-
-\NormalTok{xgboost_regress_score <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(train_df, target_var, params, eval_df, ...) \{}
-    
-\NormalTok{    X_train <-}\StringTok{ }\NormalTok{train_df }\OperatorTok{%>%}\StringTok{ }
-\StringTok{      }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}
-\StringTok{      }\KeywordTok{as.matrix}\NormalTok{()}
-    
-\NormalTok{    y_train <-}\StringTok{ }\NormalTok{train_df[[target_var]]}
-\NormalTok{    xgb_train_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(X_train, }\DataTypeTok{label =}\NormalTok{ y_train)}
-    
-\NormalTok{    X_eval <-}\StringTok{ }\NormalTok{eval_df }\OperatorTok{%>%}\StringTok{ }
-\StringTok{      }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}\StringTok{ }
-\StringTok{      }\KeywordTok{as.matrix}\NormalTok{()}
-    
-\NormalTok{    y_eval <-}\StringTok{ }\NormalTok{eval_df[[target_var]]}
-    
-\NormalTok{    xgb_eval_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(X_eval, }\DataTypeTok{label =}\NormalTok{ y_eval)}
-    
-\NormalTok{    model <-}\StringTok{ }\KeywordTok{xgb.train}\NormalTok{(}\DataTypeTok{params =}\NormalTok{ params,}
-                       \DataTypeTok{data =}\NormalTok{ xgb_train_data,}
-                       \DataTypeTok{watchlist =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{train =}\NormalTok{ xgb_train_data, }\DataTypeTok{eval =}\NormalTok{ xgb_eval_data),}
-                       \DataTypeTok{objective =} \StringTok{'reg:linear'}\NormalTok{,}
-                       \DataTypeTok{verbose =} \OtherTok{FALSE}\NormalTok{,}
-                       \DataTypeTok{nthread =} \DecValTok{20}\NormalTok{,}
-\NormalTok{                       ...)}
-    
-\NormalTok{    preds <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(model, xgb_eval_data)}
-    
-    \KeywordTok{list}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{MAE}\NormalTok{(preds, y_eval))}
-    
-\NormalTok{  \}}
-\end{Highlighting}
-\end{Shaded}
-
-Make the parameter set that we are going to search over
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{library}\NormalTok{(ParamHelpers)}
-
-\CommentTok{# make parameter set ------------------------------------------------------}
-
-\NormalTok{xgboost_random_params <-}
-\StringTok{  }\KeywordTok{makeParamSet}\NormalTok{(}
-    \KeywordTok{makeIntegerParam}\NormalTok{(}\StringTok{'max_depth'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{1}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{15}\NormalTok{),}
-    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'eta'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.01}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.1}\NormalTok{),}
-    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'gamma'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{0}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{5}\NormalTok{),}
-    \KeywordTok{makeIntegerParam}\NormalTok{(}\StringTok{'min_child_weight'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{1}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{100}\NormalTok{),}
-    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'subsample'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.25}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.9}\NormalTok{),}
-    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'colsample_bytree'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.25}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.9}\NormalTok{)}
-\NormalTok{  )}
-\end{Highlighting}
-\end{Shaded}
-
-set up our cv
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# create cv resampling ----------------------------------------------------}
-\NormalTok{resamples <-}\StringTok{ }\KeywordTok{vfold_cv}\NormalTok{(d, }\DataTypeTok{v =} \DecValTok{5}\NormalTok{) }
-\end{Highlighting}
-\end{Shaded}
-
-Use Ranger model for a progressive zoom into parameter space for tuning
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{library}\NormalTok{(MLmetrics)}
-\KeywordTok{library}\NormalTok{(xgboost)}
-\KeywordTok{library}\NormalTok{(tidytune)}
-\CommentTok{# perform surrogate search over parameters --------------------------------}
-
-\NormalTok{n <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{5}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{2}\NormalTok{)}
-\NormalTok{n_candidates <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\DecValTok{100}\NormalTok{, }\DecValTok{1000}\NormalTok{)}
-
-\NormalTok{search_results <-}\StringTok{ }
-\StringTok{  }\KeywordTok{surrogate_search}\NormalTok{(}
-    \DataTypeTok{resamples =}\NormalTok{ resamples,}
-    \DataTypeTok{recipe =}\NormalTok{ rec,}
-    \DataTypeTok{param_set =}\NormalTok{ xgboost_random_params,}
-    \DataTypeTok{n =}\NormalTok{ n,}
-    \DataTypeTok{scoring_func =}\NormalTok{ xgboost_regress_score,}
-    \DataTypeTok{nrounds =} \DecValTok{1000}\NormalTok{,}
-    \DataTypeTok{early_stopping_rounds =} \DecValTok{20}\NormalTok{,}
-    \DataTypeTok{eval_metric =} \StringTok{'mae'}\NormalTok{,}
-    \DataTypeTok{input =} \OtherTok{NULL}\NormalTok{,}
-    \DataTypeTok{surrogate_target =} \StringTok{'mae'}\NormalTok{,}
-    \DataTypeTok{n_candidates =}\NormalTok{ n_candidates,}
-    \DataTypeTok{top_n =} \DecValTok{5}
-\NormalTok{  )}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{search_summary <-}\StringTok{ }
-\StringTok{  }\NormalTok{search_results }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{group_by_at}\NormalTok{(}\KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{mean}\NormalTok{(mae)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{arrange}\NormalTok{(mae)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-18-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{search_results }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{group_by_at}\NormalTok{(}
-    \KeywordTok{c}\NormalTok{(}\StringTok{"surrogate_run"}\NormalTok{, }
-      \StringTok{"surrogate_iteration"}\NormalTok{,}
-      \StringTok{"param_id"}\NormalTok{,}
-       \KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)}
-\NormalTok{      )}
-\NormalTok{    ) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{mean}\NormalTok{(mae)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{ungroup}\NormalTok{() }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{surrogate_run =} \KeywordTok{factor}\NormalTok{(surrogate_run)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{arrange}\NormalTok{(}
-\NormalTok{    surrogate_run,}
-\NormalTok{    surrogate_iteration}
-\NormalTok{  ) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{mutate}\NormalTok{(}
-    \DataTypeTok{iteration =} \KeywordTok{row_number}\NormalTok{()}
-\NormalTok{  ) }\OperatorTok{%>%}
-\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ iteration, }\DataTypeTok{y =}\NormalTok{ mae)) }\OperatorTok{+}
-\StringTok{    }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.2}\NormalTok{, }\DataTypeTok{size =} \FloatTok{0.8}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"grey"}\NormalTok{) }\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{col =}\NormalTok{ surrogate_run)) }\OperatorTok{+}\StringTok{ }
-\StringTok{  }\KeywordTok{theme_bw}\NormalTok{() }\OperatorTok{+}\StringTok{ }
-\StringTok{  }\KeywordTok{labs}\NormalTok{(}
-    \DataTypeTok{y =} \StringTok{"MAE"}\NormalTok{,}
-    \DataTypeTok{x =} \StringTok{"iteration"}\NormalTok{,}
-    \DataTypeTok{col =} \StringTok{"Surrogate Run"}
-\NormalTok{  )}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}
-\centering
-\includegraphics{zillow-prize_files/figure-latex/fig-mae-by-run-1.pdf}
-\caption{\label{fig:fig-mae-by-run}Mean Absolute Error Progressively
-Decreasing with Each Surrogate Run}
-\end{figure}
-
-\section{Make Predictions with Tuned
-Parameters}\label{make-predictions-with-tuned-parameters}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{tuned_params <-}\StringTok{ }\NormalTok{search_summary }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{ungroup}\NormalTok{() }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{filter}\NormalTok{(mae }\OperatorTok{==}\StringTok{ }\KeywordTok{min}\NormalTok{(mae)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)) }\OperatorTok{%>%}
-\StringTok{  }\KeywordTok{as.list}\NormalTok{()}
-
-\NormalTok{tuned_params}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## $max_depth
-## [1] 5
-## 
-## $eta
-## [1] 0.07531416
-## 
-## $gamma
-## [1] 2.009971
-## 
-## $min_child_weight
-## [1] 100
-## 
-## $subsample
-## [1] 0.8821157
-## 
-## $colsample_bytree
-## [1] 0.5284899
-\end{verbatim}
-
-Train the model using the tuned parameters
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{d_prepped <-}\StringTok{ }\KeywordTok{prep}\NormalTok{(rec)}
 
 \NormalTok{train_df <-}\StringTok{ }\KeywordTok{bake}\NormalTok{(d_prepped, }\DataTypeTok{newdata =}\NormalTok{ d)}
 
 \NormalTok{x_train <-}\StringTok{ }\NormalTok{train_df }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{select}\NormalTok{(features_to_use_baseline) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{as.matrix}\NormalTok{()}
 
 \NormalTok{y_train <-}\StringTok{ }\NormalTok{train_df}\OperatorTok{$}\NormalTok{log_error}
 
 \NormalTok{xgb_train_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(x_train, }\DataTypeTok{label =}\NormalTok{ y_train)}
 
-\NormalTok{model <-}\StringTok{ }\KeywordTok{xgb.train}\NormalTok{(}\DataTypeTok{params =}\NormalTok{ tuned_params,}
-                   \DataTypeTok{data =}\NormalTok{ xgb_train_data,}
-                   \DataTypeTok{objective =} \StringTok{'reg:linear'}\NormalTok{,}
-                   \DataTypeTok{verbose =} \OtherTok{FALSE}\NormalTok{,}
-                   \DataTypeTok{nthread =} \DecValTok{4}\NormalTok{,}
-                   \DataTypeTok{nrounds =} \DecValTok{1000}\NormalTok{)}
+\NormalTok{base_model <-}\StringTok{ }\KeywordTok{xgb.train}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ xgb_train_data,}
+                        \DataTypeTok{objective =} \StringTok{'reg:linear'}\NormalTok{,}
+                        \DataTypeTok{verbose =} \OtherTok{FALSE}\NormalTok{,}
+                        \DataTypeTok{nrounds =} \DecValTok{1000}\NormalTok{,}
+                        \DataTypeTok{nthread =} \DecValTok{20}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-Now we need to make our predictions. We'll make a helper function
-\texttt{predict\_date()} to do this.
+\subsection{Making Predictions with Base Line
+Model}\label{making-predictions-with-base-line-model}
+
+Now we finally get to make our first predictions! Since we'll be doing
+this again and potentially many times, let's make a helper function
+\texttt{predict\_date()} to do this. This function will take, the
+parcels (\texttt{parcel\_id}) and the dates (\texttt{predict\_date}) we
+wish to predict, along with the model (\texttt{mdl}) and features we
+want to use to (\texttt{features\_to\_use}) to do the predictions
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{predict_date <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(parcel_id, predict_date, mdl) \{}
+\NormalTok{predict_date <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(parcel_id, predict_date, mdl, features_to_use) \{}
 
 \NormalTok{d_predict_ids <-}\StringTok{ }\NormalTok{properties }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{filter}\NormalTok{(id_parcel }\OperatorTok{%in%}\StringTok{ }\NormalTok{parcel_id) }\OperatorTok{%>%}
@@ -4723,7 +4618,8 @@ Now we need to make our predictions. We'll make a helper function
 \NormalTok{    ) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{spread}\NormalTok{(date, pred)}
 
-\KeywordTok{names}\NormalTok{(properties_predict) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"ParcelId"}\NormalTok{, }\StringTok{"201610"}\NormalTok{,}\StringTok{"201611"}\NormalTok{,}\StringTok{"201612"}\NormalTok{, }\StringTok{"201710"}\NormalTok{,}\StringTok{"201711"}\NormalTok{,}\StringTok{"201712"}\NormalTok{)}
+\KeywordTok{names}\NormalTok{(properties_predict) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"ParcelId"}\NormalTok{, }\StringTok{"201610"}\NormalTok{, }\StringTok{"201611"}\NormalTok{, }
+                               \StringTok{"201612"}\NormalTok{, }\StringTok{"201710"}\NormalTok{, }\StringTok{"201711"}\NormalTok{, }\StringTok{"201712"}\NormalTok{)}
 
 \NormalTok{properties_predict}
 
@@ -4733,63 +4629,571 @@ Now we need to make our predictions. We'll make a helper function
 
 The submission requires a prediction for Oct-Dec 2016 and Oct-Dec 2017.
 This means that the prediction is for any day in that month. For our
-example first submission, we are going to just set the date to the first
-wednesday in each month. This is completely arbitrary. Another approach
-would be to make predictions for every day in each month and submit the
-mean prediction for each month. We'll save this for later work.
+example submissions, we are going to set the date to the first Wednesday
+in each month. This is completely arbitrary, but provides a simple
+starting point. Another approach would be to make predictions for every
+day in each month and submit the mean prediction for each month. We'll
+save this for later work.
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{# first wednesday in each month}
-\NormalTok{predict_dates <-}\StringTok{ }\KeywordTok{date}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{"2016-10-06"}\NormalTok{,}\StringTok{"2016-11-02"}\NormalTok{,}\StringTok{"2016-12-07"}\NormalTok{, }\StringTok{"2017-10-04"}\NormalTok{,}\StringTok{"2017-11-01"}\NormalTok{,}\StringTok{"2017-12-06"}\NormalTok{))}
+\NormalTok{predict_dates <-}\StringTok{ }\KeywordTok{date}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{"2016-10-06"}\NormalTok{, }\StringTok{"2016-11-02"}\NormalTok{, }\StringTok{"2016-12-07"}\NormalTok{, }
+                        \StringTok{"2017-10-04"}\NormalTok{, }\StringTok{"2017-11-01"}\NormalTok{, }\StringTok{"2017-12-06"}\NormalTok{))}
 
 \CommentTok{# split parcels to chunck our predictions}
 \NormalTok{id_parcels <-}\StringTok{ }\NormalTok{properties}\OperatorTok{$}\NormalTok{id_parcel}
 \NormalTok{id_parcel_splits <-}\StringTok{ }\KeywordTok{split}\NormalTok{(id_parcels, }\KeywordTok{ceiling}\NormalTok{(}\KeywordTok{seq_along}\NormalTok{(id_parcels) }\OperatorTok{/}\StringTok{ }\DecValTok{5000}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
 
+Now make the predictions with \texttt{base\_model}
 
-\NormalTok{predict_list <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(id_parcel_splits, }\ControlFlowTok{function}\NormalTok{(i) \{}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{base_predict_list <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(id_parcel_splits, }\ControlFlowTok{function}\NormalTok{(i) \{}
   
 \NormalTok{  pred_df <-}\StringTok{ }\KeywordTok{predict_date}\NormalTok{(}
     \DataTypeTok{parcel_id =}\NormalTok{ i, }
     \DataTypeTok{predict_date =}\NormalTok{ predict_dates, }
-    \DataTypeTok{mdl =}\NormalTok{ model}
+    \DataTypeTok{mdl =}\NormalTok{ base_model,}
+    \DataTypeTok{features_to_use =}\NormalTok{ features_to_use_baseline}
 \NormalTok{    )}
 \NormalTok{  \})}
 
 \CommentTok{# they only evaluate to 4 decimcals so round to save space}
 \CommentTok{# Convert ParcelId to integer to prevent Sci Notation that causes}
 \CommentTok{# issues with submission}
+\NormalTok{base_predict_df <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(base_predict_list) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate_at}\NormalTok{(}\KeywordTok{vars}\NormalTok{(}\StringTok{`}\DataTypeTok{201610}\StringTok{`}\OperatorTok{:}\StringTok{`}\DataTypeTok{201712}\StringTok{`}\NormalTok{), round, }\DataTypeTok{digits =} \DecValTok{4}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{ParcelId =} \KeywordTok{as.integer}\NormalTok{(ParcelId)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{as.data.frame}\NormalTok{()}
+
+\KeywordTok{write_csv}\NormalTok{(base_predict_df, }\StringTok{"submissions/base_submit.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The resulting MAE of this submission was \texttt{0.0789722} on the
+public leaderboard. Not that great, but hey at least we have room to
+improve.
+
+Save this value for comparison
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{base_mae <-}\StringTok{ }\FloatTok{0.0789722}
+\end{Highlighting}
+\end{Shaded}
+
+Let's see if tuning the parameters of the XGBoost model can help improve
+that.
+
+\section{Hyperparameter Optimization}\label{hyperparameter-optimization}
+
+The double edged sword of the XGBoost model is how widely varying the
+predictions it generates can be depending on what the models
+hyperparameters are set to. The good is that it allows us to be very
+flexible across many different datasets, the bad is it almost always
+requires us to perform some type of hyperparameter optimization to fine
+tune its' performance. The ugly is the code needed to perform this.
+
+Our parameter optimization strategy is as follows
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Create a scoring function to capture model performance using MAE
+\item
+  Use 5-fold cross validation to resample our training data
+\item
+  Randomly generate intital parameter combinations.
+\item
+  Using step 3 as an intital input, use a surrogate Random Forest model
+  to progressively zoom into parameter space based on the average
+  performance of parameter sets across the resampled data on our scoring
+  function. We will set this to 4 runs for now, zooming further down
+  each time.
+\end{enumerate}
+
+\subsection{Creating Our Scoring
+Function}\label{creating-our-scoring-function}
+
+To assess our parameter tuning performance we will create the function
+\texttt{xgboost\_regress\_score()} that will capture the MAE of each
+resample and parameter combination of our data
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# create scoring function -------------------------------------------------}
+
+\NormalTok{xgboost_regress_score <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(train_df, target_var, params, eval_df, ...) \{}
+    
+\NormalTok{    X_train <-}\StringTok{ }\NormalTok{train_df }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}
+\StringTok{      }\KeywordTok{as.matrix}\NormalTok{()}
+    
+\NormalTok{    y_train <-}\StringTok{ }\NormalTok{train_df[[target_var]]}
+\NormalTok{    xgb_train_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(X_train, }\DataTypeTok{label =}\NormalTok{ y_train)}
+    
+\NormalTok{    X_eval <-}\StringTok{ }\NormalTok{eval_df }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{      }\KeywordTok{as.matrix}\NormalTok{()}
+    
+\NormalTok{    y_eval <-}\StringTok{ }\NormalTok{eval_df[[target_var]]}
+    
+\NormalTok{    xgb_eval_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(X_eval, }\DataTypeTok{label =}\NormalTok{ y_eval)}
+    
+\NormalTok{    model <-}\StringTok{ }\KeywordTok{xgb.train}\NormalTok{(}\DataTypeTok{params =}\NormalTok{ params,}
+                       \DataTypeTok{data =}\NormalTok{ xgb_train_data,}
+                       \DataTypeTok{watchlist =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{train =}\NormalTok{ xgb_train_data, }\DataTypeTok{eval =}\NormalTok{ xgb_eval_data),}
+                       \DataTypeTok{objective =} \StringTok{'reg:linear'}\NormalTok{,}
+                       \DataTypeTok{verbose =} \OtherTok{FALSE}\NormalTok{,}
+                       \DataTypeTok{nthread =} \DecValTok{20}\NormalTok{,}
+\NormalTok{                       ...)}
+    
+\NormalTok{    preds <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(model, xgb_eval_data)}
+    
+    \KeywordTok{list}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{MAE}\NormalTok{(preds, y_eval))}
+    
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Parameter Search Space}\label{parameter-search-space}
+
+We will use the following parameters
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{eta} {[}default=0.3, alias: \texttt{learning\_rate}{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Step size shrinkage used in update to prevents overfitting. After
+    each boosting step, we can directly get the weights of new features,
+    and eta shrinks the feature weights to make the boosting process
+    more conservative.
+  \item
+    range: {[}0, 1{]}
+  \end{itemize}
+\item
+  \texttt{gamma} {[}default=0, alias: \texttt{min\_split\_loss}{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Minimum loss reduction required to make a further partition on a
+    leaf node of the tree. The larger \texttt{gamma} is, the more
+    conservative the algorithm will be.
+  \item
+    range{[}0, \texttt{Inf}{]}
+  \end{itemize}
+\item
+  \texttt{max\_depth} {[}default=6{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Maximum depth of a tree. Increasing this value will make the model
+    more complex and more likely to overfit. 0 indicates no limit.
+  \item
+    range: {[}0, \texttt{Inf}{]}
+  \end{itemize}
+\item
+  \texttt{min\_child\_weight} {[}default=1{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Minimum sum of instance weight (hessian) needed in a child. If the
+    tree partition step results in a leaf node with the sum of instance
+    weight less than \texttt{min\_child\_weight}, then the building
+    process will give up further partitioning. In linear regression
+    task, this simply corresponds to minimum number of instances needed
+    to be in each node. The larger \texttt{min\_child\_weight} is, the
+    more conservative the algorithm will be.
+  \item
+    range: {[}0, \texttt{Inf}{]}
+  \end{itemize}
+\item
+  \texttt{subsample} {[}default=1{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Subsample ratio of the training instances. Setting it to 0.5 means
+    that XGBoost would randomly sample half of the training data prior
+    to growing trees. and this will prevent overfitting. Subsampling
+    will occur once in every boosting iteration.
+  \item
+    range: (0, 1{]}
+  \end{itemize}
+\item
+  \texttt{colsample\_bytree} {[}default=1{]}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Subsample ratio of columns when constructing each tree. Subsampling
+    will occur once in every boosting iteration.
+  \item
+    range: (0, 1{]}
+  \end{itemize}
+\end{itemize}
+
+Based on the performance of these optimizations other parameters could
+be included later. I set the ranges on these parameters with the idea
+that our base line model might be overfiting.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ParamHelpers)}
+\CommentTok{# make parameter set ------------------------------------------------------}
+\NormalTok{xgboost_random_params <-}
+\StringTok{  }\KeywordTok{makeParamSet}\NormalTok{(}
+    \KeywordTok{makeIntegerParam}\NormalTok{(}\StringTok{'max_depth'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{1}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{15}\NormalTok{),}
+    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'eta'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.01}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.1}\NormalTok{),}
+    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'gamma'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{0}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{5}\NormalTok{),}
+    \KeywordTok{makeIntegerParam}\NormalTok{(}\StringTok{'min_child_weight'}\NormalTok{, }\DataTypeTok{lower =} \DecValTok{1}\NormalTok{, }\DataTypeTok{upper =} \DecValTok{100}\NormalTok{),}
+    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'subsample'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.25}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.9}\NormalTok{),}
+    \KeywordTok{makeNumericParam}\NormalTok{(}\StringTok{'colsample_bytree'}\NormalTok{, }\DataTypeTok{lower =} \FloatTok{0.25}\NormalTok{, }\DataTypeTok{upper =} \FloatTok{0.9}\NormalTok{)}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{5-fold Cross Validation}\label{fold-cross-validation}
+
+Set up our resampling via 5 fold cross validation
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# create cv resampling ----------------------------------------------------}
+\NormalTok{resamples <-}\StringTok{ }\KeywordTok{vfold_cv}\NormalTok{(d, }\DataTypeTok{v =} \DecValTok{5}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Random Forest Search of Parameter
+Space}\label{random-forest-search-of-parameter-space}
+
+All of the heavy lifting for the surrogate Random Forest model is
+contained in the \texttt{tidytune::surrogate\_search()} function.
+
+The progressive zoom into more promising parameter space is done by
+passing a vector to \texttt{n} and \texttt{n\_canidates}. Higher values
+for \texttt{n\_candidates} will restrict the search to better performing
+areas and lower values increase the randnomness (with \texttt{0} falling
+back on random search).\texttt{n} is the number of runs of the surrogate
+model that will run for each of our 5 folds.
+
+\texttt{top\_n} is set to 5, which tells the model out of the top
+\texttt{n\_candidates} pass along the \texttt{top\_n} to the next round.
+
+We will do for runs of the surrogate Random Forest model, zooming into
+more performant parameter space each time.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(MLmetrics)}
+\KeywordTok{library}\NormalTok{(xgboost)}
+\KeywordTok{library}\NormalTok{(tidytune)}
+
+\CommentTok{# perform surrogate search over parameters --------------------------------}
+\NormalTok{n <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{5}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+\CommentTok{# start with random and then zoom in}
+\NormalTok{n_candidates <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{, }\DecValTok{100}\NormalTok{, }\DecValTok{1000}\NormalTok{)}
+
+\NormalTok{search_results <-}\StringTok{ }
+\StringTok{  }\KeywordTok{surrogate_search}\NormalTok{(}
+    \DataTypeTok{resamples =}\NormalTok{ resamples,}
+    \DataTypeTok{recipe =}\NormalTok{ rec,}
+    \DataTypeTok{param_set =}\NormalTok{ xgboost_random_params,}
+    \DataTypeTok{n =}\NormalTok{ n,}
+    \DataTypeTok{scoring_func =}\NormalTok{ xgboost_regress_score,}
+    \DataTypeTok{nrounds =} \DecValTok{1000}\NormalTok{,}
+    \DataTypeTok{early_stopping_rounds =} \DecValTok{20}\NormalTok{,}
+    \DataTypeTok{eval_metric =} \StringTok{'mae'}\NormalTok{,}
+    \DataTypeTok{input =} \OtherTok{NULL}\NormalTok{,}
+    \DataTypeTok{surrogate_target =} \StringTok{'mae'}\NormalTok{,}
+    \DataTypeTok{n_candidates =}\NormalTok{ n_candidates,}
+    \DataTypeTok{top_n =} \DecValTok{5}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{search_summary <-}\StringTok{ }
+\StringTok{  }\NormalTok{search_results }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by_at}\NormalTok{(}\KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{mean}\NormalTok{(mae)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{arrange}\NormalTok{(mae)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{zillow-prize_files/figure-latex/unnamed-chunk-16-1.pdf}
+
+\subsection{Exploring Parameter Space}\label{exploring-parameter-space}
+
+Let's explore the parameter space some, shall we?
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{search_results }\OperatorTok{%>%}
+\StringTok{   }\KeywordTok{group_by_at}\NormalTok{(}
+     \KeywordTok{c}\NormalTok{(}\StringTok{"surrogate_run"}\NormalTok{, }
+       \StringTok{"surrogate_iteration"}\NormalTok{,}
+       \StringTok{"param_id"}\NormalTok{,}
+      \KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)}
+\NormalTok{       )}
+\NormalTok{     ) }\OperatorTok{%>%}
+\StringTok{   }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{mean}\NormalTok{(mae)) }\OperatorTok{%>%}
+\StringTok{   }\KeywordTok{ungroup}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{surrogate_run =} \KeywordTok{factor}\NormalTok{(surrogate_run)) }\OperatorTok{%>%}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ subsample, }\DataTypeTok{y =}\NormalTok{ gamma, }\DataTypeTok{size =}\NormalTok{ mae)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{col =}\NormalTok{ surrogate_run)) }\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{theme_bw}\NormalTok{() }\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}
+    \DataTypeTok{y =} \StringTok{"gamma"}\NormalTok{,}
+    \DataTypeTok{x =} \StringTok{"subsample"}\NormalTok{,}
+    \DataTypeTok{col =} \StringTok{"Surrogate Run"}\NormalTok{,}
+    \DataTypeTok{size =} \StringTok{"Average MAE"}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{zillow-prize_files/figure-latex/fig-param-compare-1.pdf}
+\caption{\label{fig:fig-param-compare}Gamma and subsample parameters
+converging with each surrogate run}
+\end{figure}
+
+How does performance increase with each iteration?
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{search_results }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{group_by_at}\NormalTok{(}
+    \KeywordTok{c}\NormalTok{(}\StringTok{"surrogate_run"}\NormalTok{, }
+      \StringTok{"surrogate_iteration"}\NormalTok{,}
+      \StringTok{"param_id"}\NormalTok{,}
+       \KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)}
+\NormalTok{      )}
+\NormalTok{    ) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{mae =} \KeywordTok{mean}\NormalTok{(mae)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ungroup}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{surrogate_run =} \KeywordTok{factor}\NormalTok{(surrogate_run)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{arrange}\NormalTok{(}
+\NormalTok{    surrogate_run,}
+\NormalTok{    surrogate_iteration}
+\NormalTok{  ) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}
+    \DataTypeTok{iteration =} \KeywordTok{row_number}\NormalTok{()}
+\NormalTok{  ) }\OperatorTok{%>%}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ iteration, }\DataTypeTok{y =}\NormalTok{ mae)) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.2}\NormalTok{, }\DataTypeTok{size =} \FloatTok{0.8}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"grey"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{col =}\NormalTok{ surrogate_run)) }\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{theme_bw}\NormalTok{() }\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}
+    \DataTypeTok{y =} \StringTok{"MAE"}\NormalTok{,}
+    \DataTypeTok{x =} \StringTok{"iteration"}\NormalTok{,}
+    \DataTypeTok{col =} \StringTok{"Surrogate Run"}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{zillow-prize_files/figure-latex/fig-mae-by-run-1.pdf}
+\caption{\label{fig:fig-mae-by-run}Mean Absolute Error Progressively
+Decreasing with Each Surrogate Run}
+\end{figure}
+
+\section{Tuned Model}\label{tuned-model}
+
+Get the parameter set with the lowest average \texttt{mae} across all
+folds
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{tuned_params <-}\StringTok{ }\NormalTok{search_summary }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{ungroup}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{(mae }\OperatorTok{==}\StringTok{ }\KeywordTok{min}\NormalTok{(mae)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{getParamIds}\NormalTok{(xgboost_random_params)) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{as.list}\NormalTok{()}
+
+\NormalTok{tuned_params}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## $max_depth
+## [1] 5
+## 
+## $eta
+## [1] 0.07531416
+## 
+## $gamma
+## [1] 2.009971
+## 
+## $min_child_weight
+## [1] 100
+## 
+## $subsample
+## [1] 0.8821157
+## 
+## $colsample_bytree
+## [1] 0.5284899
+\end{verbatim}
+
+Since we didn't save the actual models produced in our search, train a
+model with the tuned parameters
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{d_prepped <-}\StringTok{ }\KeywordTok{prep}\NormalTok{(rec)}
+
+\NormalTok{train_df <-}\StringTok{ }\KeywordTok{bake}\NormalTok{(d_prepped, }\DataTypeTok{newdata =}\NormalTok{ d)}
+
+\NormalTok{x_train <-}\StringTok{ }\NormalTok{train_df }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(features_to_use) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{as.matrix}\NormalTok{()}
+
+\NormalTok{y_train <-}\StringTok{ }\NormalTok{train_df}\OperatorTok{$}\NormalTok{log_error}
+
+\NormalTok{xgb_train_data <-}\StringTok{ }\KeywordTok{xgb.DMatrix}\NormalTok{(x_train, }\DataTypeTok{label =}\NormalTok{ y_train)}
+
+\NormalTok{tuned_model <-}\StringTok{ }\KeywordTok{xgb.train}\NormalTok{(}\DataTypeTok{params =}\NormalTok{ tuned_params,}
+                         \DataTypeTok{data =}\NormalTok{ xgb_train_data,}
+                         \DataTypeTok{objective =} \StringTok{'reg:linear'}\NormalTok{,}
+                         \DataTypeTok{verbose =} \OtherTok{FALSE}\NormalTok{,}
+                         \DataTypeTok{nthread =} \DecValTok{20}\NormalTok{,}
+                         \DataTypeTok{nrounds =} \DecValTok{1000}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Making Predictions with Tuned
+Model}\label{making-predictions-with-tuned-model}
+
+Since we already created our helper function \texttt{predict\_dates()}
+we can apply it here with our new model
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predict_list <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(id_parcel_splits, }\ControlFlowTok{function}\NormalTok{(i) \{}
+  
+\NormalTok{  pred_df <-}\StringTok{ }\KeywordTok{predict_date}\NormalTok{(}
+    \DataTypeTok{parcel_id =}\NormalTok{ i, }
+    \DataTypeTok{predict_date =}\NormalTok{ predict_dates, }
+    \DataTypeTok{mdl =}\NormalTok{ tuned_model,}
+    \DataTypeTok{features_to_use =}\NormalTok{ features_to_use}
+\NormalTok{    )}
+\NormalTok{  \})}
+
+
 \NormalTok{predict_df <-}\StringTok{ }\KeywordTok{bind_rows}\NormalTok{(predict_list) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{mutate_at}\NormalTok{(}\KeywordTok{vars}\NormalTok{(}\StringTok{`}\DataTypeTok{201610}\StringTok{`}\OperatorTok{:}\StringTok{`}\DataTypeTok{201712}\StringTok{`}\NormalTok{), round, }\DataTypeTok{digits =} \DecValTok{4}\NormalTok{) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{ParcelId =} \KeywordTok{as.integer}\NormalTok{(ParcelId)) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{as.data.frame}\NormalTok{()}
 
-\KeywordTok{write_csv}\NormalTok{(predict_df, }\StringTok{"data/submit01.csv"}\NormalTok{)}
+\KeywordTok{write_csv}\NormalTok{(predict_df, }\StringTok{"submissions/submit01.csv"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-This model produced a MAE of \texttt{0.0651839} on the public
-leaderboard, which is honestly not that great, but it is a starting
-point that we can now start iterarting from. My first thought is perhaps
-we are overfitting on our training data, we could start exploring how
-differnt tuning affect actual submissions and not just cross validation
-based on resampling. Based on this we can tract how our performance
-changes and start narrow down what what tuning are most performant for
-this task.
+\section{Model Comparison}\label{model-comparison}
 
-Another approach would be to only use
+This model produced a MAE of \texttt{0.0651839} on the public
+leaderboard.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{tuned_mae <-}\StringTok{ }\FloatTok{0.0651839}
+
+\CommentTok{# how much did we improve?}
+\NormalTok{(tuned_mae }\OperatorTok{-}\StringTok{ }\NormalTok{base_mae) }\OperatorTok{/}\StringTok{ }\NormalTok{base_mae}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] -0.1745969
+\end{verbatim}
+
+Hey not bad! Our hyperparameter optimization process resulted in a
+17.5\% reduction in Mean Abosolute Error when compared to our base line
+model. While our absolute position on the leaderboard still isn't very
+high, it's a solid first submission that we can build upon and test new
+models against. With the top 10 finsishers on the public leaderboard all
+averaging 184 submissions each (highest being 449!) this empahsizes the
+iterative nature of predictive modeling. We aren't in
+1\textsuperscript{st} place with our first submission but we didn't
+expect to be.
+
+At this point if we were competing the actual competition we would go
+back to the drawing board in start investigating what we could do
+differently to improve our score. In our specific case, things like not
+making the predicion date the first Wednesday of each month and looking
+at the average prediction across all days in the month would be the
+first thing I would check to se what kind of improvement resulted. Also
+based on @\ref(fig:fig-mae-by-run) it looks like can could further
+shrink our parameter space to find more optimal hyperparameter
+combinations.
+
+Other things like adding more interaction features or stacking our
+xgboost predictions as part of an ensemble of other models is an area to
+explore as well.
 
 \chapter{Summary}\label{summary}
 
+Overall we went from basic preprocessing and exploratory analysis, to
+feature engineering, to complex parameter tuning. We found out alot
+about the data and alot about the modeling process in general.
+
+Using a base line XGBoost model with a limited number of features, we
+were able to achieve a MAE of \texttt{0.0789722}, however when we used
+5-fold cross validation and used a Random Forest surrogate model to
+optimatize the XGBoost parameters, we were able to achieve a submission
+MAE of \texttt{0.0651839}, a 17.46\% reduction from our base line model.
+While the absolute quality of our prediction isn't high enough to take
+1\textsuperscript{st} place just yet, we are set up well to continue to
+make improvements.
+
 \section{Key Findings}\label{key-findings}
 
-\section{Weak Points of Analysis}\label{weak-points-of-analysis}
+The main take away after exploring this dataset is that the spatial and
+temporal autocorrelation of features, especially that in the response
+variable \texttt{log\_error} are extremely useful to take advantage of
+when making predictions. However, overfitting to our training data might
+cause our models so far to have a higher bias than we would like. This
+is something we could explore with future submissions.
 
-imputation method need to test more models could include more geo
-related features like interstate density
+\section{Next Steps}\label{next-steps}
 
-should do a base line comparision
+\begin{itemize}
+\tightlist
+\item
+  Keep exploring how tuning the model affects submission MAE
+\item
+  Creating other features such as more interactions
+\item
+  Try other models or ensembles of models
+\item
+  If using external features, explore more geo-related information, such
+  as
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Proximity to Interstates,
+  \item
+    The use of building footprints extracted from Imagery
+  \item
+    School Zones
+  \end{itemize}
+\item
+  Explore other imputation methods
+\end{itemize}
 
 \bibliography{book.bib,packages.bib}
 

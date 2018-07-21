@@ -5,11 +5,11 @@
 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Zillow Prize Modeling</title>
+  <title>An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</title>
   <meta name="description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example.">
   <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
 
-  <meta property="og:title" content="Zillow Prize Modeling" />
+  <meta property="og:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   <meta property="og:type" content="book" />
   
   
@@ -17,7 +17,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Zillow Prize Modeling" />
+  <meta name="twitter:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   
   <meta name="twitter:description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example." />
   
@@ -166,7 +166,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2" data-path="feat-eng.html"><a href="feat-eng.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
 <li class="chapter" data-level="4.3" data-path="feat-eng.html"><a href="feat-eng.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
+<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a><ul>
+<li class="chapter" data-level="5.1" data-path="feature-selection.html"><a href="feature-selection.html#generate-importance-helper-function"><i class="fa fa-check"></i><b>5.1</b> Generate Importance Helper Function</a></li>
+<li class="chapter" data-level="5.2" data-path="feature-selection.html"><a href="feature-selection.html#v-fold-cross-validation-resampling"><i class="fa fa-check"></i><b>5.2</b> V-Fold Cross Validation Resampling</a></li>
+<li class="chapter" data-level="5.3" data-path="feature-selection.html"><a href="feature-selection.html#inspect-importance-results"><i class="fa fa-check"></i><b>5.3</b> Inspect Importance Results</a></li>
+</ul></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
 <li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
 <li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
@@ -201,7 +205,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Zillow Prize Modeling</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</a>
           </h1>
         </div>
 
@@ -211,8 +215,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="feature-selection" class="section level1">
 <h1><span class="header-section-number">Chapter 5</span> Feature Selection</h1>
-<p>Now that we have our data in something Based on the data frame we created in <code>d</code> and the transformation recipe we made we are going to do some initital analysis on which features we want to keep or drop. the <code>xgboost</code> package provides a function, <code>xgb.importance()</code> that gives a summary of how important each feature was in a model estimated by <code>xgb.train()</code></p>
-<p>To have a little more robustness in our selection, we will use v fold cross validation to get mutliple samples from <code>d</code> and investigate the importance of the features across all samples.</p>
+<p>Now that we created a boat load of features, how do we decide which ones we want to use? As typical, there are many ways of performing feature selection. Here we will perform just one.</p>
+<p>Based on the data frame we created in <code>d</code> and the transformation recipe we made we are going to do some initital analysis on which features we want to keep or drop. The <code>xgboost</code> package provides a function, <code>xgb.importance()</code> that gives a summary of how important each feature was in a model estimated by <code>xgb.train()</code>. We will use this to help guide our selection of features to carry forward. However, we want to make sure that we don’t mistakenly remove a feature that is actually important, so instead of running the <code>xgb.importance()</code> function just once on all of our traning data, we will use v fold cross validation to create mutliple sub samples and run the <code>xgb.importance()</code> function for each one.</p>
+<div id="generate-importance-helper-function" class="section level2">
+<h2><span class="header-section-number">5.1</span> Generate Importance Helper Function</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(broom)
 <span class="kw">library</span>(purrr)
 <span class="kw">library</span>(xgboost)
@@ -232,6 +238,9 @@ importance_results &lt;-<span class="st"> </span><span class="cf">function</span
   
   mdl_importance
 }</code></pre></div>
+</div>
+<div id="v-fold-cross-validation-resampling" class="section level2">
+<h2><span class="header-section-number">5.2</span> V-Fold Cross Validation Resampling</h2>
 <p>Create the resampling, run the models and summarize the results</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(rsample)
 
@@ -250,6 +259,9 @@ feature_avg &lt;-<span class="st"> </span>importance_df <span class="op">%&gt;%<
     <span class="dt">sd =</span> <span class="kw">sd</span>(Gain), 
     <span class="dt">n =</span> <span class="kw">n</span>()
     )</code></pre></div>
+</div>
+<div id="inspect-importance-results" class="section level2">
+<h2><span class="header-section-number">5.3</span> Inspect Importance Results</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">feature_avg <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> forcats<span class="op">::</span><span class="kw">fct_reorder</span>(Feature, mean), <span class="dt">y =</span> mean)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_hline</span>(<span class="kw">aes</span>(<span class="dt">yintercept =</span> <span class="fl">0.001</span>), <span class="dt">colour =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">size =</span> <span class="dv">1</span>, <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span>
@@ -275,6 +287,7 @@ Figure 5.1: Mean Feature Importance Based on Cross Validation Using Basic XGBoos
 <span class="st">  </span><span class="kw">filter</span>(mean <span class="op">&gt;=</span><span class="st"> </span><span class="fl">0.001</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span>.<span class="op">$</span>Feature</code></pre></div>
 
+</div>
 </div>
             </section>
 

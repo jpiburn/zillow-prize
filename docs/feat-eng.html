@@ -25,7 +25,7 @@
 <meta name="author" content="Jesse Piburn">
 
 
-<meta name="date" content="2018-07-20">
+<meta name="date" content="2018-07-21">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,13 +168,26 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
-<li class="chapter" data-level="6.0.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.0.1</b> XGBoost</a></li>
-<li class="chapter" data-level="6.0.2" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.0.2</b> creating our scoring function</a></li>
-<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#make-predictions-with-tuned-parameters"><i class="fa fa-check"></i><b>6.1</b> Make Predictions with Tuned Parameters</a></li>
+<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
+<li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
+<li class="chapter" data-level="6.3" data-path="modeling.html"><a href="modeling.html#base-line-model"><i class="fa fa-check"></i><b>6.3</b> Base Line Model</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-base-line-model"><i class="fa fa-check"></i><b>6.3.1</b> Making Predictions with Base Line Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="modeling.html"><a href="modeling.html#hyperparameter-optimization"><i class="fa fa-check"></i><b>6.4</b> Hyperparameter Optimization</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.4.1</b> Creating Our Scoring Function</a></li>
+<li class="chapter" data-level="6.4.2" data-path="modeling.html"><a href="modeling.html#parameter-search-space"><i class="fa fa-check"></i><b>6.4.2</b> Parameter Search Space</a></li>
+<li class="chapter" data-level="6.4.3" data-path="modeling.html"><a href="modeling.html#fold-cross-validation"><i class="fa fa-check"></i><b>6.4.3</b> 5-fold Cross Validation</a></li>
+<li class="chapter" data-level="6.4.4" data-path="modeling.html"><a href="modeling.html#random-forest-search-of-parameter-space"><i class="fa fa-check"></i><b>6.4.4</b> Random Forest Search of Parameter Space</a></li>
+<li class="chapter" data-level="6.4.5" data-path="modeling.html"><a href="modeling.html#exploring-parameter-space"><i class="fa fa-check"></i><b>6.4.5</b> Exploring Parameter Space</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="modeling.html"><a href="modeling.html#tuned-model"><i class="fa fa-check"></i><b>6.5</b> Tuned Model</a><ul>
+<li class="chapter" data-level="6.5.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-tuned-model"><i class="fa fa-check"></i><b>6.5.1</b> Making Predictions with Tuned Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="modeling.html"><a href="modeling.html#model-comparison"><i class="fa fa-check"></i><b>6.6</b> Model Comparison</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="summary.html"><a href="summary.html"><i class="fa fa-check"></i><b>7</b> Summary</a><ul>
 <li class="chapter" data-level="7.1" data-path="summary.html"><a href="summary.html#key-findings"><i class="fa fa-check"></i><b>7.1</b> Key Findings</a></li>
-<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#weak-points-of-analysis"><i class="fa fa-check"></i><b>7.2</b> Weak Points of Analysis</a></li>
+<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#next-steps"><i class="fa fa-check"></i><b>7.2</b> Next Steps</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -199,14 +212,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="feat-eng" class="section level1">
 <h1><span class="header-section-number">Chapter 4</span> Feature Engineering</h1>
 <p>After we have done an intital EDA of our data we can start doing some feature engineering, this is where we can create new features such as interaction variables, apply transformations such as centering and scaling, choice how we want to encode our categorical features, and also bring in new external information.</p>
-<p>Just as in <a href="eda.html#eda">3</a>, throughout this section we will progressively updating our <code>properties</code> data to include new and transformed features that we are going to continue with into the next stages.</p>
+<p>Just as in Chapter <a href="eda.html#eda">3</a>, throughout this section we will progressively updating our <code>properties</code> data to include new and transformed features that we are going to continue with into the next stages.</p>
 <div id="creating-new-features" class="section level2">
 <h2><span class="header-section-number">4.1</span> Creating New Features</h2>
 <blockquote>
 <p>“Everything is related to everything else, but near things are more related than distant things.”</p>
-<ul>
-<li>Waldo Tobler</li>
-</ul>
+<p>— Waldo Tobler</p>
 </blockquote>
 <p>This “First Law of Geography” is something we can take advantage of for creating new features based on our existing ones. In this section we will create based on both data from the Kaggle competition and also examples of external sources as well</p>
 <div id="internal-features" class="section level3">
@@ -364,15 +375,7 @@ prop_geo_ids &lt;-<span class="st"> </span>properties_geo <span class="op">%&gt;
 <h4><span class="header-section-number">4.1.2.1</span> American Community Survey</h4>
 <p>The <a href="https://www.census.gov/programs-surveys/acs/">American Community Survey</a> is a great source of demographic and household data. As an example of using this data let’s bring in a few features related to our area of interest.</p>
 <p>In our example here, we are completely ignoring the margin or error for each feature, given more time investigating the information contained in these fields is most likely worth your while.</p>
-<p>There are literally thousands you can explore in the ACS. For our example, we are going to stop a little short of that and only add the following</p>
-<ul>
-<li>Fill this in
-<ul>
-<li>sub group 1</li>
-<li>sub group 2</li>
-</ul></li>
-<li>fill this in</li>
-</ul>
+<p>There are literally thousands you can explore in the ACS. For our example, we are going to use a few</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidycensus)
 
 api_key &lt;-<span class="st"> </span><span class="kw">Sys.getenv</span>(<span class="st">&quot;CENSUS_API_KEY&quot;</span>)
@@ -710,7 +713,15 @@ d &lt;-<span class="st"> </span>trans <span class="op">%&gt;%</span><span class=
       <span class="dt">ordered =</span> <span class="ot">TRUE</span>),
     <span class="dt">str_quality =</span> <span class="kw">factor</span>(str_quality, <span class="dt">levels =</span> <span class="dv">12</span><span class="op">:</span><span class="dv">1</span>, <span class="dt">ordered =</span> <span class="ot">TRUE</span>)
   )</code></pre></div>
-<p>Here we are going to use the fantastic package <code>recipes</code> to handle all of our feature transformations</p>
+<p>Here we are going to use the <code>recipes</code> package to handle all of our feature transformations. The main transformations we are going to apply are as follows</p>
+<ol style="list-style-type: decimal">
+<li>Apply a Box-Cox transformation on the features that were highly skewed</li>
+<li>Creating dummy variables using one hot encoding for non ordered factors and polynomial spline for ordered factors</li>
+<li>Create interaction features from all of the <code>tax_*</code> and <code>area_*</code> features</li>
+<li>Center and Scale all the predictors</li>
+<li>Transform the several <code>acs_home_value_cnt_*</code> features using PCA. Keep only 5</li>
+<li>Remove any Features that have zero variance</li>
+</ol>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(recipes)
 
 rec &lt;-<span class="st"> </span><span class="kw">recipe</span>(d) <span class="op">%&gt;%</span>

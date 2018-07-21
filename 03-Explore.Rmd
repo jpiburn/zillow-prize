@@ -20,8 +20,8 @@ trans <- read_feather("data/transactions.feather")
 
 
 ## Response Variable
-`log_error` something something text come back to when the processing is finished
-```{r skim-trans, warning=FALSE, out.width="100%", cache=TRUE}
+`log_error` something something text come back to when the processing is finished. Apologies ahead of time for the poor formating of the table. I'll work to fix that.
+```{r skim-trans, warning=FALSE, out.width="100%", cache=TRUE, size=5}
 skim(trans) %>%
   skimr::pander()
 ```
@@ -97,7 +97,7 @@ trans %>%
 ### Transactions Over Time
 
 
-```{r trans-per-week, fig.cap="Number of Transactions per Week. The dip in the middle coorisponds to the hold out testing data", message=FALSE ,cache=TRUE}
+```{r trans-per-week, fig.cap="Number of Transactions per Week. The dip in the middle corresponds to the hold out testing data", message=FALSE ,cache=TRUE}
 trans %>% 
   group_by(week_since_start) %>% 
   summarise(n = n()) %>% 
@@ -120,7 +120,7 @@ trans %>%
 ```
 
 ### Spatial Distribution of `log_error`
-```{r, map-log-error, fig.cap="Distribution of Log Errors", message=FALSE, warning=FALSE, out.width="100%", cache=TRUE}
+```{r, map-log-error, fig.cap="Spatial Distribution of Log Errors", message=FALSE, warning=FALSE, out.width="100%", cache=TRUE}
 library(leaflet)
 library(leaflet.extras)
 
@@ -145,6 +145,7 @@ Now lets take a look at the `properties` dataset. Based on the descriptions from
 properties <- read_feather("data/properties_17.feather")
 ```
 
+Again apologies for the table formatting. Useful information none the less.
 ```{r skim-prop, cache=TRUE}
 skim(properties) %>%
   skimr::pander()
@@ -160,7 +161,7 @@ missing_data <- plot_missing(properties, theme = theme_bw())
 missing_data
 ```
 
-There seem to be quite a lot of missing features. For now lets remove the ones that are over 50% and continue on with those. We could come back to the ones we dropped and try to recover some of those missing values with more sophisticated methods, for example we could impute the missing values based on their spatial neighbors but for now we will continue with the ones that have over 50% of their values.
+There seem to be quite a lot of missing features. For now lets remove the ones that are over 50% missing and continue on with those that are more than 50% complete. We could come back to the ones we dropped and try to recover some of those missing values with more sophisticated methods, for example we could impute the missing values based on their spatial neighbors but for now we will continue with the ones that have over 50% of their values.
 
 A few of the features, `rawcensustractandblock`, `fips`, and `censustractandblock`, and `region_county` are ID fields for their census geography units. Since we have already extracted that information earlier in `properties_geo` we will drop them here as well since we can add the information contained in those features in a cleaner format later.
 
@@ -175,7 +176,7 @@ chisq.test(properties$zoning_landuse, properties$zoning_landuse_county)
 
 Based on that, let's remove `zoning_property` and `zoning_landuse_county`
 
-```{r remove-missing}
+```{r remove-missing, warning=FALSE}
 
 features_to_keep <- missing_data %>% 
   filter(
@@ -319,7 +320,7 @@ While the values are extremely large, they appear to look legitimate. We won't r
 
 Now a look at the relationships between our remaining numeric features
 
-```{r num-cor-heatmap, out.width="100%", warning=FALSE, message=FALSE, cache=TRUE, fig.cap="Correlation of Numeric Features", fig.asp=1.1}
+```{r num-cor-heatmap, out.width="100%", warning=FALSE, message=FALSE, fig.cap="Correlation of Numeric Features", fig.asp=1.1}
 library(heatmaply)
 
 properties %>%

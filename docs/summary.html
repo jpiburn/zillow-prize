@@ -25,7 +25,7 @@
 <meta name="author" content="Jesse Piburn">
 
 
-<meta name="date" content="2018-07-20">
+<meta name="date" content="2018-07-21">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,13 +168,26 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
-<li class="chapter" data-level="6.0.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.0.1</b> XGBoost</a></li>
-<li class="chapter" data-level="6.0.2" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.0.2</b> creating our scoring function</a></li>
-<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#make-predictions-with-tuned-parameters"><i class="fa fa-check"></i><b>6.1</b> Make Predictions with Tuned Parameters</a></li>
+<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
+<li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
+<li class="chapter" data-level="6.3" data-path="modeling.html"><a href="modeling.html#base-line-model"><i class="fa fa-check"></i><b>6.3</b> Base Line Model</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-base-line-model"><i class="fa fa-check"></i><b>6.3.1</b> Making Predictions with Base Line Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="modeling.html"><a href="modeling.html#hyperparameter-optimization"><i class="fa fa-check"></i><b>6.4</b> Hyperparameter Optimization</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.4.1</b> Creating Our Scoring Function</a></li>
+<li class="chapter" data-level="6.4.2" data-path="modeling.html"><a href="modeling.html#parameter-search-space"><i class="fa fa-check"></i><b>6.4.2</b> Parameter Search Space</a></li>
+<li class="chapter" data-level="6.4.3" data-path="modeling.html"><a href="modeling.html#fold-cross-validation"><i class="fa fa-check"></i><b>6.4.3</b> 5-fold Cross Validation</a></li>
+<li class="chapter" data-level="6.4.4" data-path="modeling.html"><a href="modeling.html#random-forest-search-of-parameter-space"><i class="fa fa-check"></i><b>6.4.4</b> Random Forest Search of Parameter Space</a></li>
+<li class="chapter" data-level="6.4.5" data-path="modeling.html"><a href="modeling.html#exploring-parameter-space"><i class="fa fa-check"></i><b>6.4.5</b> Exploring Parameter Space</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="modeling.html"><a href="modeling.html#tuned-model"><i class="fa fa-check"></i><b>6.5</b> Tuned Model</a><ul>
+<li class="chapter" data-level="6.5.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-tuned-model"><i class="fa fa-check"></i><b>6.5.1</b> Making Predictions with Tuned Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="modeling.html"><a href="modeling.html#model-comparison"><i class="fa fa-check"></i><b>6.6</b> Model Comparison</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="summary.html"><a href="summary.html"><i class="fa fa-check"></i><b>7</b> Summary</a><ul>
 <li class="chapter" data-level="7.1" data-path="summary.html"><a href="summary.html#key-findings"><i class="fa fa-check"></i><b>7.1</b> Key Findings</a></li>
-<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#weak-points-of-analysis"><i class="fa fa-check"></i><b>7.2</b> Weak Points of Analysis</a></li>
+<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#next-steps"><i class="fa fa-check"></i><b>7.2</b> Next Steps</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -198,16 +211,36 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="summary" class="section level1">
 <h1><span class="header-section-number">Chapter 7</span> Summary</h1>
+<p>Overall we went from basic preprocessing and exploratory analysis, to feature engineering, to complex parameter tuning. We found out alot about the data and alot about the modeling process in general.</p>
+<p>Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of <code>0.0789722</code>, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of <code>0.0651839</code>, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn’t high enough to take 1^st place just yet, we are set up well to continue to make improvements.</p>
 <div id="key-findings" class="section level2">
 <h2><span class="header-section-number">7.1</span> Key Findings</h2>
+<p>The main take away after exploring this dataset is that the spatial and temporal autocorrelation of features, especially that in the response variable <code>log_error</code> are extremely useful to take advantage of when making predictions. However, overfitting to our training data might cause our models so far to have a higher bias than we would like. This is something we could explore with future submissions.</p>
 </div>
-<div id="weak-points-of-analysis" class="section level2">
-<h2><span class="header-section-number">7.2</span> Weak Points of Analysis</h2>
-<p>imputation method need to test more models could include more geo related features like interstate density</p>
-<p>should do a base line comparision</p>
+<div id="next-steps" class="section level2">
+<h2><span class="header-section-number">7.2</span> Next Steps</h2>
+<ul>
+<li>Keep exploring how tuning the model affects submission MAE</li>
+<li>Creating other features such as more interactions</li>
+<li>Try other models or ensembles of models</li>
+<li>If using external features, explore more geo-related information, such as
+<ul>
+<li>Proximity to Interstates,</li>
+<li>The use of building footprints extracted from Imagery</li>
+<li>School Zones</li>
+</ul></li>
+<li>Explore other imputation methods</li>
+</ul>
 
 </div>
 </div>
+
+
+
+
+
+
+
             </section>
 
           </div>

@@ -25,7 +25,7 @@
 <meta name="author" content="Jesse Piburn">
 
 
-<meta name="date" content="2018-07-20">
+<meta name="date" content="2018-07-21">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,13 +168,26 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
-<li class="chapter" data-level="6.0.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.0.1</b> XGBoost</a></li>
-<li class="chapter" data-level="6.0.2" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.0.2</b> creating our scoring function</a></li>
-<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#make-predictions-with-tuned-parameters"><i class="fa fa-check"></i><b>6.1</b> Make Predictions with Tuned Parameters</a></li>
+<li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
+<li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
+<li class="chapter" data-level="6.3" data-path="modeling.html"><a href="modeling.html#base-line-model"><i class="fa fa-check"></i><b>6.3</b> Base Line Model</a><ul>
+<li class="chapter" data-level="6.3.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-base-line-model"><i class="fa fa-check"></i><b>6.3.1</b> Making Predictions with Base Line Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="modeling.html"><a href="modeling.html#hyperparameter-optimization"><i class="fa fa-check"></i><b>6.4</b> Hyperparameter Optimization</a><ul>
+<li class="chapter" data-level="6.4.1" data-path="modeling.html"><a href="modeling.html#creating-our-scoring-function"><i class="fa fa-check"></i><b>6.4.1</b> Creating Our Scoring Function</a></li>
+<li class="chapter" data-level="6.4.2" data-path="modeling.html"><a href="modeling.html#parameter-search-space"><i class="fa fa-check"></i><b>6.4.2</b> Parameter Search Space</a></li>
+<li class="chapter" data-level="6.4.3" data-path="modeling.html"><a href="modeling.html#fold-cross-validation"><i class="fa fa-check"></i><b>6.4.3</b> 5-fold Cross Validation</a></li>
+<li class="chapter" data-level="6.4.4" data-path="modeling.html"><a href="modeling.html#random-forest-search-of-parameter-space"><i class="fa fa-check"></i><b>6.4.4</b> Random Forest Search of Parameter Space</a></li>
+<li class="chapter" data-level="6.4.5" data-path="modeling.html"><a href="modeling.html#exploring-parameter-space"><i class="fa fa-check"></i><b>6.4.5</b> Exploring Parameter Space</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="modeling.html"><a href="modeling.html#tuned-model"><i class="fa fa-check"></i><b>6.5</b> Tuned Model</a><ul>
+<li class="chapter" data-level="6.5.1" data-path="modeling.html"><a href="modeling.html#making-predictions-with-tuned-model"><i class="fa fa-check"></i><b>6.5.1</b> Making Predictions with Tuned Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="modeling.html"><a href="modeling.html#model-comparison"><i class="fa fa-check"></i><b>6.6</b> Model Comparison</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="summary.html"><a href="summary.html"><i class="fa fa-check"></i><b>7</b> Summary</a><ul>
 <li class="chapter" data-level="7.1" data-path="summary.html"><a href="summary.html#key-findings"><i class="fa fa-check"></i><b>7.1</b> Key Findings</a></li>
-<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#weak-points-of-analysis"><i class="fa fa-check"></i><b>7.2</b> Weak Points of Analysis</a></li>
+<li class="chapter" data-level="7.2" data-path="summary.html"><a href="summary.html#next-steps"><i class="fa fa-check"></i><b>7.2</b> Next Steps</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -219,6 +232,7 @@ importance_results &lt;-<span class="st"> </span><span class="cf">function</span
   
   mdl_importance
 }</code></pre></div>
+<p>Create the resampling, run the models and summarize the results</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(rsample)
 
 resamples &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(d, <span class="dt">v =</span> <span class="dv">10</span>, <span class="dt">repeats =</span> <span class="dv">5</span>)

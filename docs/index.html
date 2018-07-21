@@ -5,11 +5,11 @@
 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Zillow Prize Modeling</title>
+  <title>An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</title>
   <meta name="description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example.">
   <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
 
-  <meta property="og:title" content="Zillow Prize Modeling" />
+  <meta property="og:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   <meta property="og:type" content="book" />
   
   
@@ -17,7 +17,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Zillow Prize Modeling" />
+  <meta name="twitter:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   
   <meta name="twitter:description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example." />
   
@@ -166,7 +166,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2" data-path="feat-eng.html"><a href="feat-eng.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
 <li class="chapter" data-level="4.3" data-path="feat-eng.html"><a href="feat-eng.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
+<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a><ul>
+<li class="chapter" data-level="5.1" data-path="feature-selection.html"><a href="feature-selection.html#generate-importance-helper-function"><i class="fa fa-check"></i><b>5.1</b> Generate Importance Helper Function</a></li>
+<li class="chapter" data-level="5.2" data-path="feature-selection.html"><a href="feature-selection.html#v-fold-cross-validation-resampling"><i class="fa fa-check"></i><b>5.2</b> V-Fold Cross Validation Resampling</a></li>
+<li class="chapter" data-level="5.3" data-path="feature-selection.html"><a href="feature-selection.html#inspect-importance-results"><i class="fa fa-check"></i><b>5.3</b> Inspect Importance Results</a></li>
+</ul></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
 <li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
 <li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
@@ -201,7 +205,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Zillow Prize Modeling</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</a>
           </h1>
         </div>
 
@@ -210,7 +214,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
             <section class="normal" id="section-">
 <div id="header">
-<h1 class="title">Zillow Prize Modeling</h1>
+<h1 class="title">An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</h1>
 <h4 class="author"><em>Jesse Piburn</em></h4>
 <h4 class="date"><em>2018-07-21</em></h4>
 </div>
@@ -221,6 +225,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p class="caption">Zillow Prize</p>
 </div>
 <p>This book is meant to be an illustrative guide for approaching a predictive modeling task. We’ll step through the different parts of the modeling workflow and work through the Zillow Prize Kaggle Competition dataset and prediction tasks.</p>
+<p>The Github source for this document can be found <a href="https://github.com/jpiburn/zillow-prize">here</a></p>
 
 </div>
             </section>

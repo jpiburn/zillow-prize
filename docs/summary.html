@@ -5,11 +5,11 @@
 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Zillow Prize Modeling</title>
+  <title>An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</title>
   <meta name="description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example.">
   <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
 
-  <meta property="og:title" content="Zillow Prize Modeling" />
+  <meta property="og:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   <meta property="og:type" content="book" />
   
   
@@ -17,7 +17,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Zillow Prize Modeling" />
+  <meta name="twitter:title" content="An Example Predictive Modeling Workflow Using The Zillow Prize Dataset" />
   
   <meta name="twitter:description" content="This is to document an example workflow and predictive modeling process using the Kaggle Zillow competition as an example." />
   
@@ -166,7 +166,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="4.2" data-path="feat-eng.html"><a href="feat-eng.html#handling-missing-data"><i class="fa fa-check"></i><b>4.2</b> Handling Missing Data</a></li>
 <li class="chapter" data-level="4.3" data-path="feat-eng.html"><a href="feat-eng.html#feature-transformation"><i class="fa fa-check"></i><b>4.3</b> Feature Transformation</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a></li>
+<li class="chapter" data-level="5" data-path="feature-selection.html"><a href="feature-selection.html"><i class="fa fa-check"></i><b>5</b> Feature Selection</a><ul>
+<li class="chapter" data-level="5.1" data-path="feature-selection.html"><a href="feature-selection.html#generate-importance-helper-function"><i class="fa fa-check"></i><b>5.1</b> Generate Importance Helper Function</a></li>
+<li class="chapter" data-level="5.2" data-path="feature-selection.html"><a href="feature-selection.html#v-fold-cross-validation-resampling"><i class="fa fa-check"></i><b>5.2</b> V-Fold Cross Validation Resampling</a></li>
+<li class="chapter" data-level="5.3" data-path="feature-selection.html"><a href="feature-selection.html#inspect-importance-results"><i class="fa fa-check"></i><b>5.3</b> Inspect Importance Results</a></li>
+</ul></li>
 <li class="chapter" data-level="6" data-path="modeling.html"><a href="modeling.html"><i class="fa fa-check"></i><b>6</b> Modeling</a><ul>
 <li class="chapter" data-level="6.1" data-path="modeling.html"><a href="modeling.html#xgboost"><i class="fa fa-check"></i><b>6.1</b> XGBoost</a></li>
 <li class="chapter" data-level="6.2" data-path="modeling.html"><a href="modeling.html#our-recipe-for-success"><i class="fa fa-check"></i><b>6.2</b> Our Recipe for Success</a></li>
@@ -201,7 +205,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Zillow Prize Modeling</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">An Example Predictive Modeling Workflow Using The Zillow Prize Dataset</a>
           </h1>
         </div>
 
@@ -212,7 +216,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="summary" class="section level1">
 <h1><span class="header-section-number">Chapter 7</span> Summary</h1>
 <p>Overall we went from basic preprocessing and exploratory analysis, to feature engineering, to complex parameter tuning. We found out alot about the data and alot about the modeling process in general.</p>
-<p>Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of <code>0.0789722</code>, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of <code>0.0651839</code>, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn’t high enough to take 1^st place just yet, we are set up well to continue to make improvements.</p>
+<p>Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of <code>0.0789722</code>, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of <code>0.0651839</code>, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn’t high enough to take 1<sup>st</sup> place just yet, we are set up well to continue to make improvements.</p>
 <div id="key-findings" class="section level2">
 <h2><span class="header-section-number">7.1</span> Key Findings</h2>
 <p>The main take away after exploring this dataset is that the spatial and temporal autocorrelation of features, especially that in the response variable <code>log_error</code> are extremely useful to take advantage of when making predictions. However, overfitting to our training data might cause our models so far to have a higher bias than we would like. This is something we could explore with future submissions.</p>

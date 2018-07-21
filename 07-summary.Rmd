@@ -2,7 +2,7 @@
 
 Overall we went from basic preprocessing and exploratory analysis, to feature engineering, to complex parameter tuning. We found out alot about the data and alot about the modeling process in general.
 
-Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of `0.0789722`, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of `0.0651839`, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn't high enough to take 1^st place just yet, we are set up well to continue to make improvements. 
+Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of `0.0789722`, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of `0.0651839`, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn't high enough to take 1^st^ place just yet, we are set up well to continue to make improvements. 
 
 
 ## Key Findings

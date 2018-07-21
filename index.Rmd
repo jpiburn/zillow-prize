@@ -1,5 +1,5 @@
 --- 
-title: "Zillow Prize Modeling"
+title: "An Example Predictive Modeling Workflow Using The Zillow Prize Dataset"
 author: "Jesse Piburn"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
@@ -16,3 +16,5 @@ description: "This is to document an example workflow and predictive modeling pr
 
 
 This book is meant to be an illustrative guide for approaching a predictive modeling task. We'll step through the different parts of the modeling workflow and work through the Zillow Prize Kaggle Competition dataset and prediction tasks.
+
+The Github source for this document can be found [here](https://github.com/jpiburn/zillow-prize)

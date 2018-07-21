@@ -1,10 +1,11 @@
 # Feature Selection
 
-Now that we have our data in something
-Based on the data frame we created in `d` and the transformation recipe we made we are going to do some initital analysis on which features we want to keep or drop. the `xgboost` package provides a function, `xgb.importance()` that gives a summary of how important each feature was in a model estimated by `xgb.train()`
+Now that we created a boat load of features, how do we decide which ones we want to use? As typical, there are many ways of performing feature selection. Here we will perform just one.
 
-To have a little more robustness in our selection, we will use v fold cross validation to get mutliple samples from `d` and investigate the importance of the features across all samples.
+Based on the data frame we created in `d` and the transformation recipe we made we are going to do some initital analysis on which features we want to keep or drop. The `xgboost` package provides a function, `xgb.importance()` that gives a summary of how important each feature was in a model estimated by `xgb.train()`. We will use this to help guide our selection of features to carry forward. However, we want to make sure that we don't mistakenly remove a feature that is actually important, so instead of running the `xgb.importance()` function just once on all of our traning data, we will use v fold cross validation to create mutliple sub samples and run the `xgb.importance()` function for each one. 
 
+
+## Generate Importance Helper Function
 ```{r feat-select-func, eval=FALSE}
 library(broom)
 library(purrr)
@@ -27,7 +28,7 @@ importance_results <- function(splits) {
 }
 ```
 
-
+## V-Fold Cross Validation Resampling
 Create the resampling, run the models and summarize the results
 ```{r feat-select-run, eval=FALSE}
 library(rsample)
@@ -49,6 +50,7 @@ feature_avg <- importance_df %>%
     )
 ```
 
+## Inspect Importance Results
 ```{r feat-select-read-in-saved, echo=FALSE}
 importance_df <- read_feather("data/importance_vars.feather")
 

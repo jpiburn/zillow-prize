@@ -12,7 +12,7 @@ The only always correct answer in predictive modeling is, "It depends."
 The problem we will workthrough in this book is the [Zillow Prize](https://www.kaggle.com/c/zillow-prize-1) compeitition on that took place on Kaggle. Although it is now closed, it provides a good problemset for us to work through.
 
 From the site
->>>In this million-dollar competition, participants will develop an algorithm that makes predictions about the future sale prices of homes. The contest is structured into two rounds, the qualifying round which opens May 24, 2017 and the private round for the 100 top qualifying teams that opens on Feb 1st, 2018. In the qualifying round, you’ll be building a model to improve the Zestimate residual error. In the final round, you’ll build a home valuation algorithm from the ground up, using external data sources to help engineer new features that give your model an edge over the competition.
+> In this million-dollar competition, participants will develop an algorithm that makes predictions about the future sale prices of homes. The contest is structured into two rounds, the qualifying round which opens May 24, 2017 and the private round for the 100 top qualifying teams that opens on Feb 1st, 2018. In the qualifying round, you’ll be building a model to improve the Zestimate residual error. In the final round, you’ll build a home valuation algorithm from the ground up, using external data sources to help engineer new features that give your model an edge over the competition.
 
 ## Evaluation
 
@@ -20,11 +20,17 @@ The submission were evaluated based on the Mean Absolute Error between the predi
 
 The `logerror` is defined as
 
-$$logerror = log(Zestimate) - log(SalePrice)$$
+\begin{equation}
+logerror = log(Zestimate) - log(SalePrice)
+(\#eq:logerror)
+\end{equation}
 
 while Mean Absolute Error is defined as
 
-$$MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n} $$
+\begin{equation}
+MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n}
+(\#eq:mae)
+\end{equation}
 
 ## Initital Thoughts
 
@@ -32,7 +38,7 @@ $$MAE = \frac{{\sum_{i=1}^{n} |y_i - x_i|}}{n} = \frac{{\sum_{i=1}^{n} |e_i|}}{n
 >
 > --- Some Real Estate Guy
 
-The above quote is of course the number one rule of real estate. Though out this modeling process, let's try to keep this idea in mind when we are exploring, creating new features, and modeling the data.
+The above quote is of course the number one rule of real estate. Through out this modeling process, let's try to keep this idea in mind when we are exploring, creating new features, and modeling the data.
 
 An additional interesting thing about this problem is that it can be thought about as creating a model to predict where Zillow's model is bad. We aren't trying to predict home prices, we are predicting where Zillow had a bad estimate of home prices, so the residuals of their Zestimate model.Based on this idea, let's create some new features
 

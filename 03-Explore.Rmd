@@ -1,6 +1,6 @@
 # Exploratory Analysis {#eda}
 
-After \@ref(PreProcessing) the next step is doing exploratory data analysis (EDA). I can't stess enough how critical this step is. It is tempting to want to jump right into making models and then start improving and tweaking them from there, but this can quickly take you down a rabbit hole, waste your time, and generally make you sad.
+After Preprocessing the next step is doing exploratory data analysis (EDA). I can't stess enough how critical this step is. It is tempting to want to jump right into making models and then start improving and tweaking them from there, but this can quickly take you down a rabbit hole, waste your time, and generally make you sad.
 
 The time you spend doing EDA will pay dividends later.
 

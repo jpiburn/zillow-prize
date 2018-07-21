@@ -2,7 +2,7 @@
 
 After we have done an intital EDA of our data we can start doing some feature engineering, this is where we can create new features such as interaction variables, apply transformations such as centering and scaling, choice how we want to encode our categorical features, and also bring in new external information. 
 
-Just as in \@ref(eda), throughout this section we will progressively updating our `properties` data to include new and transformed features that we are going to continue with into the next stages.
+Just as in Chapter \@ref(eda), throughout this section we will progressively updating our `properties` data to include new and transformed features that we are going to continue with into the next stages.
 
 ```{r read-prop-filtered, warning=FALSE, message=FALSE, eval=FALSE, echo=FALSE}
 library(feather)
@@ -21,7 +21,7 @@ properties <- properties %>%
 
 > "Everything is related to everything else, but near things are more related than distant things."
 > 
-> - Waldo Tobler
+> --- Waldo Tobler
 
 This "First Law of Geography" is something we can take advantage of for creating new features based on our existing ones. In this section we will create based on both data from the Kaggle competition and also examples of external sources as well
 
@@ -196,12 +196,7 @@ The [American Community Survey](https://www.census.gov/programs-surveys/acs/) is
 
 In our example here, we are completely ignoring the margin or error for each feature, given more time investigating the information contained in these fields is most likely worth your while.
 
-There are literally thousands you can explore in the ACS. For our example, we are going to stop a little short of that and only add the following
-
-- Fill this in
-    - sub group 1
-    - sub group 2
-- fill this in
+There are literally thousands you can explore in the ACS. For our example, we are going to use a few
 
 ```{r acs-data, eval=FALSE, message=FALSE, warning=FALSE}
 library(tidycensus)

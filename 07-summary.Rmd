@@ -1,11 +1,22 @@
 # Summary
 
+Overall we went from basic preprocessing and exploratory analysis, to feature engineering, to complex parameter tuning. We found out alot about the data and alot about the modeling process in general.
+
+Using a base line XGBoost model with a limited number of features, we were able to achieve a MAE of `0.0789722`, however when we used 5-fold cross validation and used a Random Forest surrogate model to optimatize the XGBoost parameters, we were able to achieve a submission MAE of `0.0651839`, a 17.46% reduction from our base line model. While the absolute quality of our prediction isn't high enough to take 1^st place just yet, we are set up well to continue to make improvements. 
+
+
 ## Key Findings
 
-## Weak Points of Analysis
+The main take away after exploring this dataset is that the spatial and temporal autocorrelation of features, especially that in the response variable `log_error` are extremely useful to take advantage of when making predictions. However, overfitting to our training data might cause our models so far to have a higher bias than we would like. This is something we could explore with future submissions.
 
-imputation method
-need to test more models
-could include more geo related features like interstate density
 
-should do a base line comparision 
+## Next Steps
+
+- Keep exploring how tuning the model affects submission MAE
+- Creating other features such as more interactions
+- Try other models or ensembles of models
+- If using external features, explore more geo-related information, such as
+    - Proximity to Interstates,
+    - The use of building footprints extracted from Imagery
+    - School Zones
+- Explore other imputation methods

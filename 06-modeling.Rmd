@@ -67,7 +67,7 @@ features_to_use <- feature_avg %>%
 ```
 
 
-```{r mod-make-recipe, echo=FALSE}
+```{r mod-make-recipe, echo=FALSE, warning=FALSE, message=FALSE}
 library(recipes)
 
 rec <- recipe(d) %>%
